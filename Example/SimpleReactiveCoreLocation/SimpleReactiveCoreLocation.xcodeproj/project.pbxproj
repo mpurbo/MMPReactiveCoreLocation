@@ -1,0 +1,517 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0B055A59583B492DB23ED081 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C180B19D5DB94D32BEB4AD7E /* libPods.a */; };
+		A9FFD77E190BDF2F00FA10DD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77D190BDF2F00FA10DD /* Foundation.framework */; };
+		A9FFD780190BDF2F00FA10DD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77F190BDF2F00FA10DD /* CoreGraphics.framework */; };
+		A9FFD782190BDF2F00FA10DD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD781190BDF2F00FA10DD /* UIKit.framework */; };
+		A9FFD788190BDF2F00FA10DD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A9FFD786190BDF2F00FA10DD /* InfoPlist.strings */; };
+		A9FFD78A190BDF2F00FA10DD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A9FFD789190BDF2F00FA10DD /* main.m */; };
+		A9FFD78E190BDF2F00FA10DD /* MMPAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A9FFD78D190BDF2F00FA10DD /* MMPAppDelegate.m */; };
+		A9FFD791190BDF2F00FA10DD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A9FFD78F190BDF2F00FA10DD /* Main.storyboard */; };
+		A9FFD794190BDF2F00FA10DD /* MMPViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A9FFD793190BDF2F00FA10DD /* MMPViewController.m */; };
+		A9FFD796190BDF2F00FA10DD /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A9FFD795190BDF2F00FA10DD /* Images.xcassets */; };
+		A9FFD79D190BDF2F00FA10DD /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD79C190BDF2F00FA10DD /* XCTest.framework */; };
+		A9FFD79E190BDF2F00FA10DD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77D190BDF2F00FA10DD /* Foundation.framework */; };
+		A9FFD79F190BDF2F00FA10DD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD781190BDF2F00FA10DD /* UIKit.framework */; };
+		A9FFD7A7190BDF2F00FA10DD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A9FFD7A5190BDF2F00FA10DD /* InfoPlist.strings */; };
+		A9FFD7A9190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A9FFD7A8190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A9FFD7A0190BDF2F00FA10DD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A9FFD772190BDF2F00FA10DD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A9FFD779190BDF2F00FA10DD;
+			remoteInfo = SimpleReactiveCoreLocation;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0FF448008CB04875AE12F7F3 /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
+		A9FFD77A190BDF2F00FA10DD /* SimpleReactiveCoreLocation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimpleReactiveCoreLocation.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9FFD77D190BDF2F00FA10DD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		A9FFD77F190BDF2F00FA10DD /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		A9FFD781190BDF2F00FA10DD /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		A9FFD785190BDF2F00FA10DD /* SimpleReactiveCoreLocation-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SimpleReactiveCoreLocation-Info.plist"; sourceTree = "<group>"; };
+		A9FFD787190BDF2F00FA10DD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A9FFD789190BDF2F00FA10DD /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		A9FFD78B190BDF2F00FA10DD /* SimpleReactiveCoreLocation-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SimpleReactiveCoreLocation-Prefix.pch"; sourceTree = "<group>"; };
+		A9FFD78C190BDF2F00FA10DD /* MMPAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMPAppDelegate.h; sourceTree = "<group>"; };
+		A9FFD78D190BDF2F00FA10DD /* MMPAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MMPAppDelegate.m; sourceTree = "<group>"; };
+		A9FFD790190BDF2F00FA10DD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		A9FFD792190BDF2F00FA10DD /* MMPViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMPViewController.h; sourceTree = "<group>"; };
+		A9FFD793190BDF2F00FA10DD /* MMPViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MMPViewController.m; sourceTree = "<group>"; };
+		A9FFD795190BDF2F00FA10DD /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		A9FFD79B190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SimpleReactiveCoreLocationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9FFD79C190BDF2F00FA10DD /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		A9FFD7A4190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SimpleReactiveCoreLocationTests-Info.plist"; sourceTree = "<group>"; };
+		A9FFD7A6190BDF2F00FA10DD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A9FFD7A8190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SimpleReactiveCoreLocationTests.m; sourceTree = "<group>"; };
+		C180B19D5DB94D32BEB4AD7E /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A9FFD777190BDF2F00FA10DD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9FFD780190BDF2F00FA10DD /* CoreGraphics.framework in Frameworks */,
+				A9FFD782190BDF2F00FA10DD /* UIKit.framework in Frameworks */,
+				A9FFD77E190BDF2F00FA10DD /* Foundation.framework in Frameworks */,
+				0B055A59583B492DB23ED081 /* libPods.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A9FFD798190BDF2F00FA10DD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9FFD79D190BDF2F00FA10DD /* XCTest.framework in Frameworks */,
+				A9FFD79F190BDF2F00FA10DD /* UIKit.framework in Frameworks */,
+				A9FFD79E190BDF2F00FA10DD /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A9FFD771190BDF2F00FA10DD = {
+			isa = PBXGroup;
+			children = (
+				A9FFD783190BDF2F00FA10DD /* SimpleReactiveCoreLocation */,
+				A9FFD7A2190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests */,
+				A9FFD77C190BDF2F00FA10DD /* Frameworks */,
+				A9FFD77B190BDF2F00FA10DD /* Products */,
+				0FF448008CB04875AE12F7F3 /* Pods.xcconfig */,
+			);
+			sourceTree = "<group>";
+		};
+		A9FFD77B190BDF2F00FA10DD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A9FFD77A190BDF2F00FA10DD /* SimpleReactiveCoreLocation.app */,
+				A9FFD79B190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A9FFD77C190BDF2F00FA10DD /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A9FFD77D190BDF2F00FA10DD /* Foundation.framework */,
+				A9FFD77F190BDF2F00FA10DD /* CoreGraphics.framework */,
+				A9FFD781190BDF2F00FA10DD /* UIKit.framework */,
+				A9FFD79C190BDF2F00FA10DD /* XCTest.framework */,
+				C180B19D5DB94D32BEB4AD7E /* libPods.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A9FFD783190BDF2F00FA10DD /* SimpleReactiveCoreLocation */ = {
+			isa = PBXGroup;
+			children = (
+				A9FFD78C190BDF2F00FA10DD /* MMPAppDelegate.h */,
+				A9FFD78D190BDF2F00FA10DD /* MMPAppDelegate.m */,
+				A9FFD78F190BDF2F00FA10DD /* Main.storyboard */,
+				A9FFD792190BDF2F00FA10DD /* MMPViewController.h */,
+				A9FFD793190BDF2F00FA10DD /* MMPViewController.m */,
+				A9FFD795190BDF2F00FA10DD /* Images.xcassets */,
+				A9FFD784190BDF2F00FA10DD /* Supporting Files */,
+			);
+			path = SimpleReactiveCoreLocation;
+			sourceTree = "<group>";
+		};
+		A9FFD784190BDF2F00FA10DD /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				A9FFD785190BDF2F00FA10DD /* SimpleReactiveCoreLocation-Info.plist */,
+				A9FFD786190BDF2F00FA10DD /* InfoPlist.strings */,
+				A9FFD789190BDF2F00FA10DD /* main.m */,
+				A9FFD78B190BDF2F00FA10DD /* SimpleReactiveCoreLocation-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		A9FFD7A2190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests */ = {
+			isa = PBXGroup;
+			children = (
+				A9FFD7A8190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests.m */,
+				A9FFD7A3190BDF2F00FA10DD /* Supporting Files */,
+			);
+			path = SimpleReactiveCoreLocationTests;
+			sourceTree = "<group>";
+		};
+		A9FFD7A3190BDF2F00FA10DD /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				A9FFD7A4190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests-Info.plist */,
+				A9FFD7A5190BDF2F00FA10DD /* InfoPlist.strings */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A9FFD779190BDF2F00FA10DD /* SimpleReactiveCoreLocation */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A9FFD7AC190BDF2F00FA10DD /* Build configuration list for PBXNativeTarget "SimpleReactiveCoreLocation" */;
+			buildPhases = (
+				43D2F34DE7914AB1882C1FCC /* Check Pods Manifest.lock */,
+				A9FFD776190BDF2F00FA10DD /* Sources */,
+				A9FFD777190BDF2F00FA10DD /* Frameworks */,
+				A9FFD778190BDF2F00FA10DD /* Resources */,
+				194998D931F84A41A79CD82E /* Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SimpleReactiveCoreLocation;
+			productName = SimpleReactiveCoreLocation;
+			productReference = A9FFD77A190BDF2F00FA10DD /* SimpleReactiveCoreLocation.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A9FFD79A190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A9FFD7AF190BDF2F00FA10DD /* Build configuration list for PBXNativeTarget "SimpleReactiveCoreLocationTests" */;
+			buildPhases = (
+				A9FFD797190BDF2F00FA10DD /* Sources */,
+				A9FFD798190BDF2F00FA10DD /* Frameworks */,
+				A9FFD799190BDF2F00FA10DD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A9FFD7A1190BDF2F00FA10DD /* PBXTargetDependency */,
+			);
+			name = SimpleReactiveCoreLocationTests;
+			productName = SimpleReactiveCoreLocationTests;
+			productReference = A9FFD79B190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A9FFD772190BDF2F00FA10DD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				CLASSPREFIX = MMP;
+				LastUpgradeCheck = 0510;
+				ORGANIZATIONNAME = Purbo;
+				TargetAttributes = {
+					A9FFD79A190BDF2F00FA10DD = {
+						TestTargetID = A9FFD779190BDF2F00FA10DD;
+					};
+				};
+			};
+			buildConfigurationList = A9FFD775190BDF2F00FA10DD /* Build configuration list for PBXProject "SimpleReactiveCoreLocation" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A9FFD771190BDF2F00FA10DD;
+			productRefGroup = A9FFD77B190BDF2F00FA10DD /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A9FFD779190BDF2F00FA10DD /* SimpleReactiveCoreLocation */,
+				A9FFD79A190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A9FFD778190BDF2F00FA10DD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9FFD796190BDF2F00FA10DD /* Images.xcassets in Resources */,
+				A9FFD788190BDF2F00FA10DD /* InfoPlist.strings in Resources */,
+				A9FFD791190BDF2F00FA10DD /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A9FFD799190BDF2F00FA10DD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9FFD7A7190BDF2F00FA10DD /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		194998D931F84A41A79CD82E /* Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Pods-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		43D2F34DE7914AB1882C1FCC /* Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A9FFD776190BDF2F00FA10DD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9FFD78A190BDF2F00FA10DD /* main.m in Sources */,
+				A9FFD78E190BDF2F00FA10DD /* MMPAppDelegate.m in Sources */,
+				A9FFD794190BDF2F00FA10DD /* MMPViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A9FFD797190BDF2F00FA10DD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9FFD7A9190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A9FFD7A1190BDF2F00FA10DD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A9FFD779190BDF2F00FA10DD /* SimpleReactiveCoreLocation */;
+			targetProxy = A9FFD7A0190BDF2F00FA10DD /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		A9FFD786190BDF2F00FA10DD /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A9FFD787190BDF2F00FA10DD /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		A9FFD78F190BDF2F00FA10DD /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A9FFD790190BDF2F00FA10DD /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		A9FFD7A5190BDF2F00FA10DD /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A9FFD7A6190BDF2F00FA10DD /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		A9FFD7AA190BDF2F00FA10DD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		A9FFD7AB190BDF2F00FA10DD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A9FFD7AD190BDF2F00FA10DD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0FF448008CB04875AE12F7F3 /* Pods.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "SimpleReactiveCoreLocation/SimpleReactiveCoreLocation-Prefix.pch";
+				INFOPLIST_FILE = "SimpleReactiveCoreLocation/SimpleReactiveCoreLocation-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		A9FFD7AE190BDF2F00FA10DD /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0FF448008CB04875AE12F7F3 /* Pods.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "SimpleReactiveCoreLocation/SimpleReactiveCoreLocation-Prefix.pch";
+				INFOPLIST_FILE = "SimpleReactiveCoreLocation/SimpleReactiveCoreLocation-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		A9FFD7B0190BDF2F00FA10DD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/SimpleReactiveCoreLocation.app/SimpleReactiveCoreLocation";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "SimpleReactiveCoreLocation/SimpleReactiveCoreLocation-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "SimpleReactiveCoreLocationTests/SimpleReactiveCoreLocationTests-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = xctest;
+			};
+			name = Debug;
+		};
+		A9FFD7B1190BDF2F00FA10DD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/SimpleReactiveCoreLocation.app/SimpleReactiveCoreLocation";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "SimpleReactiveCoreLocation/SimpleReactiveCoreLocation-Prefix.pch";
+				INFOPLIST_FILE = "SimpleReactiveCoreLocationTests/SimpleReactiveCoreLocationTests-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = xctest;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A9FFD775190BDF2F00FA10DD /* Build configuration list for PBXProject "SimpleReactiveCoreLocation" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A9FFD7AA190BDF2F00FA10DD /* Debug */,
+				A9FFD7AB190BDF2F00FA10DD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A9FFD7AC190BDF2F00FA10DD /* Build configuration list for PBXNativeTarget "SimpleReactiveCoreLocation" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A9FFD7AD190BDF2F00FA10DD /* Debug */,
+				A9FFD7AE190BDF2F00FA10DD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A9FFD7AF190BDF2F00FA10DD /* Build configuration list for PBXNativeTarget "SimpleReactiveCoreLocationTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A9FFD7B0190BDF2F00FA10DD /* Debug */,
+				A9FFD7B1190BDF2F00FA10DD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A9FFD772190BDF2F00FA10DD /* Project object */;
+}
