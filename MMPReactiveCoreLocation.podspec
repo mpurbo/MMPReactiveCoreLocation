@@ -16,6 +16,7 @@ Pod::Spec.new do |s|
   s.social_media_url = 'https://twitter.com/purubo'
 
   s.platform         = :ios
+  s.ios.deployment_target = '5.0'
   s.source_files     = 'Classes'
   s.framework        = 'CoreLocation'
   s.dependency 'ReactiveCocoa', '~> 2.3'
