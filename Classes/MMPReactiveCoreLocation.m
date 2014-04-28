@@ -128,11 +128,29 @@
     return [self defaultLocationManagerDelegateSubject];
 }
 
+- (RACSignal *)locationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy
+{
+    return [[self defaultLocationManagerDelegateSubject] filter:^BOOL(CLLocation *location) {
+        return (location.horizontalAccuracy <= desiredAccuracy);
+    }];
+}
+
+- (RACSignal *)locationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy timeout:(NSTimeInterval)timeout
+{
+    return [[[self defaultLocationManagerDelegateSubject]
+                   takeUntilBlock:^BOOL(CLLocation *location) {
+                       return (location.horizontalAccuracy <= desiredAccuracy);
+                   }]
+                   timeout:timeout onScheduler:[RACScheduler scheduler]];
+}
+
+/*
 - (RACSignal *)locationSignalWithDesiredAccuracy:(CLLocationAccuracy)desiredAccuracy
 {
     //TODO: implement
     return nil;
 }
+*/
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
@@ -149,7 +167,7 @@
     if (newLocation.horizontalAccuracy < 0) return;
     
     self.lastKnownLocation = [newLocation copy];
-    MMPRxCL_LOG(@"default CL manager updated: (%f, %f, %f)", _lastKnownLocation.coordinate.latitude, _lastKnownLocation.coordinate.longitude, _lastKnownLocation.horizontalAccuracy)
+    //MMPRxCL_LOG(@"default CL manager updated: (%f, %f, %f)", _lastKnownLocation.coordinate.latitude, _lastKnownLocation.coordinate.longitude, _lastKnownLocation.horizontalAccuracy)
     
     // send to default subject
     [[self defaultLocationManagerDelegateSubject] sendNext:[newLocation copy]];

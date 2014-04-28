@@ -62,11 +62,43 @@ typedef NSInteger MMPRCLLocationUpdateType;
 + (instancetype)instance;
 
 /**
- *  Starts the default CLLocationManager 
+ *  Starts updating locations using default global CLLocationManager managed by this class.
  */
 - (void)start;
+
+/**
+ *  Stops updating locations using default global CLLocationManager managed by this class.
+ */
 - (void)stop;
 
+/**
+ *  Basic location signal that receives CLLocation from default global CLLocationManager managed by this class.
+ *
+ *  @return A location signal.
+ */
 - (RACSignal *)locationSignal;
+
+/**
+ *  Location signal that receives only CLLocation with specified accuracy. This signal receives
+ *  CLLocation from default global CLLocationManager managed by this class.
+ *
+ *  @param desiredAccuracy desired accuracy in meters.
+ *
+ *  @return A location signal with specified accuracy.
+ */
+- (RACSignal *)locationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy;
+
+/**
+ *  Location signal that tries to wait until the specified accuracy is received. Once received
+ *  the signal will be completed. Timeout will generate an error with error domain RACSignalErrorDomain
+ *  and error code RACSignalErrorTimedOut. This signal receives
+ *  CLLocation from default global CLLocationManager managed by this class.
+ *
+ *  @param desiredAccuracy desired accuracy in meters.
+ *  @param timeout         timeout in seconds.
+ *
+ *  @return A location signal with specified accuracy and timeout.
+ */
+- (RACSignal *)locationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy timeout:(NSTimeInterval)timeout;
 
 @end
