@@ -32,7 +32,6 @@ MMPReactiveCoreLocation *rcl = [MMPReactiveCoreLocation instance];
           location.horizontalAccuracy);
 }];
 ```
-
 You can also subscribe to location updates filtered with accuracy and optional timeout:
 ```objectivec
 // give me only locations when the GPS is accurate within 100m!
@@ -56,6 +55,30 @@ You can also subscribe to location updates filtered with accuracy and optional t
               NSLog(@"It's been 15 seconds but I still haven't received accurate location.");
           }
       }];
+```
+In order to get the location stream started, you need to call `start`. To stop the stream, call `stop`. For example, to make the stream available
+throughout the application but cancelled whenever the application is in background or stopped, do something like:
+```objectivec
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+    [[MMPReactiveCoreLocation instance] start];    
+    return YES;
+}
+
+- (void)applicationDidEnterBackground:(UIApplication *)application
+{
+    [[MMPReactiveCoreLocation instance] stop];
+}
+
+- (void)applicationWillEnterForeground:(UIApplication *)application
+{
+    [[MMPReactiveCoreLocation instance] start];
+}
+
+- (void)applicationWillTerminate:(UIApplication *)application
+{
+    [[MMPReactiveCoreLocation instance] stop];
+}
 ```
 
 ## Documentation
