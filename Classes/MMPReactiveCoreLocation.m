@@ -40,9 +40,9 @@
 
 @interface MMPReactiveCoreLocation()<CLLocationManagerDelegate>
 
-@property (nonatomic, strong) CLLocationManager *defaultLocationManager;
-@property (nonatomic, strong) RACSubject *defaultLocationManagerDelegateSubject;
-
+@property(nonatomic, strong) CLLocationManager *defaultLocationManager;
+@property(nonatomic, strong) RACSubject *defaultLocationManagerDelegateSubject;
+@property(assign, nonatomic) MMPRCLLocationUpdateType lastUsedlocationUpdateType;
 @property(nonatomic, strong, readwrite) CLLocation *lastKnownLocation;
 
 @end
@@ -59,22 +59,6 @@
     return shared;
 }
 
-- (void)start
-{
-    _defaultLocationManager.pausesLocationUpdatesAutomatically = _pausesLocationUpdatesAutomatically;
-    _defaultLocationManager.distanceFilter = _distanceFilter;
-    _defaultLocationManager.desiredAccuracy = _desiredAccuracy;
-    _defaultLocationManager.activityType = _activityType;
-    // TODO: should let the user configure whether to start normal update or significant change
-    [_defaultLocationManager startUpdatingLocation];
-}
-
-- (void)stop
-{
-    // TODO: should let the user configure whether to start normal update or significant change
-    [_defaultLocationManager stopUpdatingLocation];
-}
-
 - (instancetype)initSingletonInstance
 {
     if (self = [super init]) {
@@ -83,12 +67,49 @@
         _distanceFilter = kCLDistanceFilterNone;
         _desiredAccuracy = kCLLocationAccuracyBest;
         _activityType = CLActivityTypeOther;
+        _locationUpdateType = MMPRCLLocationUpdateTypeStandard;
         
         _lastKnownLocation = nil;
         _defaultLocationManager = [[CLLocationManager alloc] init];
         _defaultLocationManager.delegate = self;
     }
     return self;
+}
+
+- (void)start
+{
+    _defaultLocationManager.pausesLocationUpdatesAutomatically = _pausesLocationUpdatesAutomatically;
+    _defaultLocationManager.distanceFilter = _distanceFilter;
+    _defaultLocationManager.desiredAccuracy = _desiredAccuracy;
+    _defaultLocationManager.activityType = _activityType;
+    
+    // not thread-safe, should start/stop be thread safe?
+    
+    _lastUsedlocationUpdateType = _locationUpdateType;
+    if (_locationUpdateType == MMPRCLLocationUpdateTypeStandard) {
+        [_defaultLocationManager startUpdatingLocation];
+    } else if (_locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) {
+        [_defaultLocationManager startMonitoringSignificantLocationChanges];
+    } else {
+        NSLog(@"[WARN] Unknown location update type: %ld, not doing anything.", _locationUpdateType);
+    }
+}
+
+- (void)stop
+{
+    // if subject has been used before, complete the subject first.
+    @synchronized(self) {
+        if (_defaultLocationManagerDelegateSubject) {
+            [_defaultLocationManagerDelegateSubject sendCompleted];
+            _defaultLocationManagerDelegateSubject = nil;
+        }
+    }
+    
+    if (_lastUsedlocationUpdateType == MMPRCLLocationUpdateTypeStandard) {
+        [_defaultLocationManager stopUpdatingLocation];
+    } else if (_locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) {
+        [_defaultLocationManager stopMonitoringSignificantLocationChanges];
+    }
 }
 
 - (RACSubject *)defaultLocationManagerDelegateSubject
@@ -130,7 +151,7 @@
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    MMPRxCL_LOG(@"default CL manager failed, error.code: %d", error.code)
+    MMPRxCL_LOG(@"default CL manager failed, error.code: %ld", error.code)
     
     // kCLErrorLocationUnknown: location is currently unknown, but CL will keep trying
     if (error.code != kCLErrorLocationUnknown) {

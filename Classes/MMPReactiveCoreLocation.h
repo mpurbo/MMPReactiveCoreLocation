@@ -27,12 +27,22 @@
 #import <CoreLocation/CoreLocation.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
+enum {
+    MMPRCLLocationUpdateTypeStandard,
+    MMPRCLLocationUpdateTypeSignificantChange
+};
+typedef NSInteger MMPRCLLocationUpdateType;
+
+/**
+ *  Class providing location-related signals generated from CLLocationManager for use with ReactiveCocoa.
+ */
 @interface MMPReactiveCoreLocation : NSObject
 
 @property(assign, nonatomic) BOOL pausesLocationUpdatesAutomatically;
 @property(assign, nonatomic) CLLocationDistance distanceFilter;
 @property(assign, nonatomic) CLLocationAccuracy desiredAccuracy;
 @property(assign, nonatomic) CLActivityType activityType;
+@property(assign, nonatomic) MMPRCLLocationUpdateType locationUpdateType;
 
 @property(readonly) CLLocation *lastKnownLocation;
 
@@ -48,6 +58,9 @@
  */
 + (instancetype)instance;
 
+/**
+ *  Starts the default CLLocationManager 
+ */
 - (void)start;
 - (void)stop;
 
