@@ -68,6 +68,7 @@
         _desiredAccuracy = kCLLocationAccuracyBest;
         _activityType = CLActivityTypeOther;
         _locationUpdateType = MMPRCLLocationUpdateTypeStandard;
+        _locationAgeLimit = MMPRCL_LOCATION_AGE_LIMIT_DEFAULT;
         
         _lastKnownLocation = nil;
         _defaultLocationManager = [[CLLocationManager alloc] init];
@@ -91,7 +92,7 @@
     } else if (_locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) {
         [_defaultLocationManager startMonitoringSignificantLocationChanges];
     } else {
-        NSLog(@"[WARN] Unknown location update type: %ld, not doing anything.", _locationUpdateType);
+        NSLog(@"[WARN] Unknown location update type: %ld, not doing anything.", (long)_locationUpdateType);
     }
 }
 
@@ -135,23 +136,28 @@
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
-    if (![locations count])
-        return;
+    // get latest location
+    if (![locations count]) return;
+    CLLocation *newLocation = [locations lastObject];
     
-    if (nil != self.lastKnownLocation && [[locations lastObject] isEqual:self.lastKnownLocation]) {
-        return;
-    }
+    // test the age of the location measurement to determine if the measurement is cached
+    // in most cases you will not want to rely on cached measurements
+    NSTimeInterval locationAge = -[newLocation.timestamp timeIntervalSinceNow];
+    if (locationAge > _locationAgeLimit) return;
     
-    self.lastKnownLocation = [[locations lastObject] copy];
+    // test that the horizontal accuracy does not indicate an invalid measurement
+    if (newLocation.horizontalAccuracy < 0) return;
+    
+    self.lastKnownLocation = [newLocation copy];
     MMPRxCL_LOG(@"default CL manager updated: (%f, %f, %f)", _lastKnownLocation.coordinate.latitude, _lastKnownLocation.coordinate.longitude, _lastKnownLocation.horizontalAccuracy)
     
     // send to default subject
-    [[self defaultLocationManagerDelegateSubject] sendNext:[[locations lastObject] copy]];
+    [[self defaultLocationManagerDelegateSubject] sendNext:[newLocation copy]];
 }
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    MMPRxCL_LOG(@"default CL manager failed, error.code: %ld", error.code)
+    MMPRxCL_LOG(@"default CL manager failed, error.code: %ld", (long)error.code)
     
     // kCLErrorLocationUnknown: location is currently unknown, but CL will keep trying
     if (error.code != kCLErrorLocationUnknown) {

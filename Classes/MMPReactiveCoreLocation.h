@@ -27,6 +27,8 @@
 #import <CoreLocation/CoreLocation.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
+#define MMPRCL_LOCATION_AGE_LIMIT_DEFAULT 5.0
+
 enum {
     MMPRCLLocationUpdateTypeStandard,
     MMPRCLLocationUpdateTypeSignificantChange
@@ -43,6 +45,7 @@ typedef NSInteger MMPRCLLocationUpdateType;
 @property(assign, nonatomic) CLLocationAccuracy desiredAccuracy;
 @property(assign, nonatomic) CLActivityType activityType;
 @property(assign, nonatomic) MMPRCLLocationUpdateType locationUpdateType;
+@property(assign, nonatomic) NSTimeInterval locationAgeLimit;
 
 @property(readonly) CLLocation *lastKnownLocation;
 
