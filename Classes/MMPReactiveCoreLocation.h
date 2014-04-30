@@ -50,13 +50,43 @@ typedef NSInteger MMPRCLLocationUpdateType;
  */
 @interface MMPReactiveCoreLocation : NSObject
 
+/**
+ *  Default value for pausesLocationUpdatesAutomatically to be set to default CLLocationManager. 
+ *  See CLLocationManager documentation for more information on this property.
+ */
 @property(assign, nonatomic) BOOL pausesLocationUpdatesAutomatically;
+
+/**
+ *  Default value for distanceFilter to be set to default CLLocationManager.
+ *  See CLLocationManager documentation for more information on this property.
+ */
 @property(assign, nonatomic) CLLocationDistance distanceFilter;
+
+/**
+ *  Default value for desiredAccuracy to be set to default CLLocationManager.
+ *  See CLLocationManager documentation for more information on this property.
+ */
 @property(assign, nonatomic) CLLocationAccuracy desiredAccuracy;
+
+/**
+ *  Default value for activityType to be set to default CLLocationManager.
+ *  See CLLocationManager documentation for more information on this property.
+ */
 @property(assign, nonatomic) CLActivityType activityType;
+
+/**
+ *  Whether the CLLocationManager should use standard location update or significant change location update.
+ */
 @property(assign, nonatomic) MMPRCLLocationUpdateType locationUpdateType;
+
+/**
+ *  How old the location should be (to determine whether the location is cached or not). By default it's 5 seconds.
+ */
 @property(assign, nonatomic) NSTimeInterval locationAgeLimit;
 
+/**
+ *  Last known location retrieved from default CLLocationManager.
+ */
 @property(readonly) CLLocation *lastKnownLocation;
 
 // clue for improper use (produces compile time error)
@@ -72,12 +102,12 @@ typedef NSInteger MMPRCLLocationUpdateType;
 + (instancetype)instance;
 
 /**
- *  Starts updating locations using default global CLLocationManager managed by this class.
+ *  Starts updating locations using default CLLocationManager managed by this class.
  */
 - (void)start;
 
 /**
- *  Stops updating locations using default global CLLocationManager managed by this class.
+ *  Stops updating locations using default CLLocationManager managed by this class.
  */
 - (void)stop;
 
