@@ -29,6 +29,16 @@
 
 #define MMPRCL_LOCATION_AGE_LIMIT_DEFAULT 5.0
 
+/**
+ *  Error domain for errors produced by the library.
+ */
+extern NSString * const MMPRCLSignalErrorDomain;
+
+/**
+ *  Error code signifying that the location service is currently unavailable.
+ */
+extern const NSInteger MMPRCLSignalErrorServiceUnavailable;
+
 enum {
     MMPRCLLocationUpdateTypeStandard,
     MMPRCLLocationUpdateTypeSignificantChange

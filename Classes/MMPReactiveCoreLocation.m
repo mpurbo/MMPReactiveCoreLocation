@@ -31,6 +31,9 @@
 #   define MMPRxCL_LOG(...)
 #endif
 
+NSString * const MMPRCLSignalErrorDomain = @"MMPRCLSignalErrorDomain";
+const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
+
 /**
  *  Delegate for custom location request.
  */
@@ -77,8 +80,33 @@
     return self;
 }
 
+- (BOOL)locationServicesAvailable
+{
+    return
+        [CLLocationManager locationServicesEnabled] &&
+        [CLLocationManager authorizationStatus] != kCLAuthorizationStatusDenied &&
+        [CLLocationManager authorizationStatus] != kCLAuthorizationStatusRestricted;
+}
+
+- (void)sendUnavailableError
+{
+    @synchronized(self) {
+        if (_defaultLocationManagerDelegateSubject) {
+            [_defaultLocationManagerDelegateSubject sendError:[NSError errorWithDomain:MMPRCLSignalErrorDomain
+                                                                                  code:MMPRCLSignalErrorServiceUnavailable
+                                                                              userInfo:nil]];
+            _defaultLocationManagerDelegateSubject = nil;
+        }
+    }
+}
+
 - (void)start
 {
+    // start only if location service available
+    if (![self locationServicesAvailable]) {
+        [self sendUnavailableError];
+    }
+    
     _defaultLocationManager.pausesLocationUpdatesAutomatically = _pausesLocationUpdatesAutomatically;
     _defaultLocationManager.distanceFilter = _distanceFilter;
     _defaultLocationManager.desiredAccuracy = _desiredAccuracy;
@@ -152,6 +180,8 @@
 }
 */
 
+#pragma mark CLLocationManagerDelegate implementation
+
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
     // get latest location
@@ -175,11 +205,22 @@
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    MMPRxCL_LOG(@"default CL manager failed, error.code: %ld", (long)error.code)
-    
     // kCLErrorLocationUnknown: location is currently unknown, but CL will keep trying
     if (error.code != kCLErrorLocationUnknown) {
-        [[self defaultLocationManagerDelegateSubject] sendError:error];
+        MMPRxCL_LOG(@"default CL manager failed, error.code: %ld", (long)error.code)
+        @synchronized(self) {
+            if (_defaultLocationManagerDelegateSubject) {
+                [_defaultLocationManagerDelegateSubject sendError:error];
+                _defaultLocationManagerDelegateSubject = nil;
+            }
+        }
+    }
+}
+
+- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    if (status == kCLAuthorizationStatusDenied || status == kCLAuthorizationStatusRestricted) {
+        [self sendUnavailableError];
     }
 }
 
