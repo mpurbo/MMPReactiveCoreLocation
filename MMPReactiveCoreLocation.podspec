@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "MMPReactiveCoreLocation"
-  s.version          = "0.1.1"
+  s.version          = "0.2.0"
   s.summary          = "A reactive CoreLocation wrapper for use with ReactiveCocoa"
   s.description      = <<-DESC
                        MMPReactiveCoreLocation is a reactive library for using CoreLocation with ReactiveCocoa.

@@ -51,19 +51,19 @@ typedef NSInteger MMPRCLLocationUpdateType;
 @interface MMPReactiveCoreLocation : NSObject
 
 /**
- *  Default value for pausesLocationUpdatesAutomatically to be set to default CLLocationManager. 
+ *  Value of pausesLocationUpdatesAutomatically to be set to default CLLocationManager. Default to YES.
  *  See CLLocationManager documentation for more information on this property.
  */
 @property(assign, nonatomic) BOOL pausesLocationUpdatesAutomatically;
 
 /**
- *  Default value for distanceFilter to be set to default CLLocationManager.
+ *  Value of distanceFilter to be set to default CLLocationManager. Default to kCLDistanceFilterNone.
  *  See CLLocationManager documentation for more information on this property.
  */
 @property(assign, nonatomic) CLLocationDistance distanceFilter;
 
 /**
- *  Default value for desiredAccuracy to be set to default CLLocationManager.
+ *  Value of desiredAccuracy to be set to default CLLocationManager. Default to kCLLocationAccuracyBest.
  *  See CLLocationManager documentation for more information on this property.
  */
 @property(assign, nonatomic) CLLocationAccuracy desiredAccuracy;
@@ -85,13 +85,29 @@ typedef NSInteger MMPRCLLocationUpdateType;
 @property(assign, nonatomic) NSTimeInterval locationAgeLimit;
 
 /**
- *  Last known location retrieved from default CLLocationManager.
+ *  Last known location retrieved from shared CLLocationManager.
  */
 @property(readonly) CLLocation *lastKnownLocation;
 
-// clue for improper use (produces compile time error)
+/**
+ *  This method is unavailable. Do not call this method directly. Use `instance` instead.
+ *
+ *  @return none
+ */
 + (instancetype) alloc __attribute__((unavailable("alloc not available, call sharedInstance instead")));
+
+/**
+ *  This method is unavailable. Do not call this method directly. Use `instance` instead.
+ *
+ *  @return none
+ */
 - (instancetype) init __attribute__((unavailable("init not available, call sharedInstance instead")));
+
+/**
+ *  This method is unavailable. Do not call this method directly. Use `instance` instead.
+ *
+ *  @return none
+ */
 + (instancetype) new __attribute__((unavailable("new not available, call sharedInstance instead")));
 
 /**
@@ -102,17 +118,17 @@ typedef NSInteger MMPRCLLocationUpdateType;
 + (instancetype)instance;
 
 /**
- *  Starts updating locations using default CLLocationManager managed by this class.
+ *  Starts updating locations using shared CLLocationManager managed by this class.
  */
 - (void)start;
 
 /**
- *  Stops updating locations using default CLLocationManager managed by this class.
+ *  Stops updating locations using shared CLLocationManager managed by this class.
  */
 - (void)stop;
 
 /**
- *  Basic location signal that receives CLLocation from default global CLLocationManager managed by this class.
+ *  Basic location signal that receives CLLocation from shared CLLocationManager managed by this class.
  *
  *  @return A location signal.
  */
@@ -120,9 +136,9 @@ typedef NSInteger MMPRCLLocationUpdateType;
 
 /**
  *  Location signal that receives only CLLocation with specified accuracy. This signal receives
- *  CLLocation from default global CLLocationManager managed by this class.
+ *  CLLocation from shared CLLocationManager managed by this class.
  *
- *  @param desiredAccuracy desired accuracy in meters.
+ *  @param desiredAccuracy Desired accuracy in meters.
  *
  *  @return A location signal with specified accuracy.
  */
@@ -132,13 +148,46 @@ typedef NSInteger MMPRCLLocationUpdateType;
  *  Location signal that tries to wait until the specified accuracy is received. Once received
  *  the signal will be completed. Timeout will generate an error with error domain RACSignalErrorDomain
  *  and error code RACSignalErrorTimedOut. This signal receives
- *  CLLocation from default global CLLocationManager managed by this class.
+ *  CLLocation from shared CLLocationManager managed by this class.
  *
- *  @param desiredAccuracy desired accuracy in meters.
- *  @param timeout         timeout in seconds.
+ *  @param desiredAccuracy Desired accuracy in meters.
+ *  @param timeout         Timeout in seconds.
  *
  *  @return A location signal with specified accuracy and timeout.
  */
 - (RACSignal *)locationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy timeout:(NSTimeInterval)timeout;
+
+/**
+ *  Requests for a single location from a private CLLocationManager specially created for the signal.
+ *  The signal will own the CLLocationManager, start and stop it automatically. The signal returned 
+ *  will send next once before completing.
+ *
+ *  @return One-time location signal.
+ */
+- (RACSignal *)singleLocationSignal;
+
+/**
+ *  Requests for a single location with specified accuracy from a private CLLocationManager 
+ *  specially created for the signal. The signal will own the CLLocationManager, start and stop it automatically. 
+ *  The signal returned will send next once before completing.
+ *
+ *  @return One-time location signal with specified accuracy.
+ */
+- (RACSignal *)singleLocationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy;
+
+/**
+ *  Requests for a single location with specified accuracy from a private CLLocationManager
+ *  specially created for the signal, and wait until the specified timeout. 
+ *  The signal will own the CLLocationManager, start and stop it automatically.
+ *  The signal returned will send next once before completing.
+ *  Timeout will generate an error with error domain RACSignalErrorDomain
+ *  and error code RACSignalErrorTimedOut.
+ *
+ *  @param desiredAccuracy Desired accuracy in meters.
+ *  @param timeout         Timeout in seconds.
+ *
+ *  @return One-time location signal with specified accuracy and timeout.
+ */
+- (RACSignal *)singleLocationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy timeout:(NSTimeInterval)timeout;
 
 @end

@@ -24,6 +24,7 @@
 //
 
 #import "MMPReactiveCoreLocation.h"
+#import <ReactiveCocoa/RACEXTScope.h>
 
 #ifdef DEBUG
 #   define MMPRxCL_LOG(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
@@ -37,7 +38,13 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
 /**
  *  Delegate for custom location request.
  */
-@interface MMPLocationManagerDelegate : NSObject<CLLocationManagerDelegate>
+@interface MMPSingleSignalDelegate : NSObject<CLLocationManagerDelegate>
+
+@property(nonatomic, weak) id<RACSubscriber>subscriber;
+@property(assign, nonatomic) NSTimeInterval locationAgeLimit;
+
+- (instancetype)initWithSubscriber:(id<RACSubscriber>)subscriber
+                  locationAgeLimit:(NSTimeInterval)locationAgeLimit;
 
 @end
 
@@ -47,6 +54,8 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
 @property(nonatomic, strong) RACSubject *defaultLocationManagerDelegateSubject;
 @property(assign, nonatomic) MMPRCLLocationUpdateType lastUsedlocationUpdateType;
 @property(nonatomic, strong, readwrite) CLLocation *lastKnownLocation;
+
+@property(nonatomic, strong) NSMutableArray *singleSignalDelegates;
 
 @end
 
@@ -76,6 +85,8 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
         _lastKnownLocation = nil;
         _defaultLocationManager = [[CLLocationManager alloc] init];
         _defaultLocationManager.delegate = self;
+        
+        self.singleSignalDelegates = [NSMutableArray array];
     }
     return self;
 }
@@ -172,13 +183,96 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                    timeout:timeout onScheduler:[RACScheduler scheduler]];
 }
 
-/*
-- (RACSignal *)locationSignalWithDesiredAccuracy:(CLLocationAccuracy)desiredAccuracy
+- (RACSignal *)singleLocationSignal
 {
-    //TODO: implement
-    return nil;
+    return [self singleLocationSignalWithPausesLocationUpdatesAutomatically:_pausesLocationUpdatesAutomatically
+                                                             distanceFilter:_distanceFilter
+                                                            desiredAccuracy:_desiredAccuracy
+                                                               activityType:_activityType
+                                                         locationUpdateType:MMPRCLLocationUpdateTypeStandard
+                                                           locationAgeLimit:_locationAgeLimit
+                                                                    timeout:-1.0];
 }
-*/
+
+- (RACSignal *)singleLocationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy
+{
+    return [self singleLocationSignalWithPausesLocationUpdatesAutomatically:_pausesLocationUpdatesAutomatically
+                                                             distanceFilter:_distanceFilter
+                                                            desiredAccuracy:desiredAccuracy
+                                                               activityType:_activityType
+                                                         locationUpdateType:MMPRCLLocationUpdateTypeStandard
+                                                           locationAgeLimit:_locationAgeLimit
+                                                                    timeout:-1.0];
+}
+
+- (RACSignal *)singleLocationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy timeout:(NSTimeInterval)timeout
+{
+    return [self singleLocationSignalWithPausesLocationUpdatesAutomatically:_pausesLocationUpdatesAutomatically
+                                                             distanceFilter:_distanceFilter
+                                                            desiredAccuracy:desiredAccuracy
+                                                               activityType:_activityType
+                                                         locationUpdateType:MMPRCLLocationUpdateTypeStandard
+                                                           locationAgeLimit:_locationAgeLimit
+                                                                    timeout:timeout];
+}
+
+- (RACSignal *)singleLocationSignalWithPausesLocationUpdatesAutomatically:(BOOL)pausesLocationUpdatesAutomatically
+                                                           distanceFilter:(CLLocationDistance)distanceFilter
+                                                          desiredAccuracy:(CLLocationAccuracy)desiredAccuracy
+                                                             activityType:(CLActivityType)activityType
+                                                       locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
+                                                         locationAgeLimit:(NSTimeInterval)locationAgeLimit
+                                                                  timeout:(NSTimeInterval)timeout
+{
+    @weakify(self)
+    
+    RACSignal *signal = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+        
+        @strongify(self)
+        
+        CLLocationManager *locationManager = [[CLLocationManager alloc] init];
+        MMPSingleSignalDelegate *delegate = [[MMPSingleSignalDelegate alloc] initWithSubscriber:subscriber
+                                                                               locationAgeLimit:locationAgeLimit];
+        // so that the delegate can be retained
+        [self.singleSignalDelegates addObject:delegate];
+        
+        locationManager.pausesLocationUpdatesAutomatically = pausesLocationUpdatesAutomatically;
+        locationManager.distanceFilter = distanceFilter;
+        locationManager.desiredAccuracy = desiredAccuracy;
+        locationManager.activityType = activityType;
+        locationManager.delegate = delegate;
+        
+        if (locationUpdateType == MMPRCLLocationUpdateTypeStandard) {
+            [locationManager startUpdatingLocation];
+        } else if (locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) {
+            [locationManager startMonitoringSignificantLocationChanges];
+        } else {
+            NSLog(@"[WARN] Unknown location update type: %ld, not doing anything.", (long)locationUpdateType);
+        }
+        
+        MMPRxCL_LOG(@"custom CL manager started")
+        
+        return [RACDisposable disposableWithBlock:^{
+            if (locationUpdateType == MMPRCLLocationUpdateTypeStandard) {
+                [locationManager stopUpdatingLocation];
+            } else if (locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) {
+                [locationManager stopMonitoringSignificantLocationChanges];
+            } else {
+                NSLog(@"[WARN] Unknown location update type: %ld, not doing anything.", (long)locationUpdateType);
+            }
+            
+            [self.singleSignalDelegates removeObject:delegate];
+            
+            MMPRxCL_LOG(@"custom CL manager stopped, number of delegates = %d", [self.singleSignalDelegates count])
+        }];
+    }];
+    
+    if (timeout > 0) {
+        return [signal timeout:timeout onScheduler:[RACScheduler scheduler]];
+    } else {
+        return signal;
+    }
+}
 
 #pragma mark CLLocationManagerDelegate implementation
 
@@ -226,16 +320,56 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
 
 @end
 
-@implementation MMPLocationManagerDelegate
+@implementation MMPSingleSignalDelegate
+
+- (instancetype)initWithSubscriber:(id<RACSubscriber>)subscriber
+                  locationAgeLimit:(NSTimeInterval)locationAgeLimit
+{
+    if (self = [super init]) {
+        self.subscriber = subscriber;
+        self.locationAgeLimit = locationAgeLimit;
+    }
+    return self;
+}
+
+#pragma mark CLLocationManagerDelegate implementation
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
+    // get latest location
+    if (![locations count]) return;
+    CLLocation *newLocation = [locations lastObject];
     
+    // test the age of the location measurement to determine if the measurement is cached
+    // in most cases you will not want to rely on cached measurements
+    NSTimeInterval locationAge = -[newLocation.timestamp timeIntervalSinceNow];
+    if (locationAge > _locationAgeLimit) return;
+    
+    // test that the horizontal accuracy does not indicate an invalid measurement
+    if (newLocation.horizontalAccuracy < 0) return;
+    
+    MMPRxCL_LOG(@"custom CL manager updated: (%f, %f, %f)", newLocation.coordinate.latitude, newLocation.coordinate.longitude, newLocation.horizontalAccuracy)
+    
+    [_subscriber sendNext:[newLocation copy]];
+    [_subscriber sendCompleted];
 }
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    
+    if (error.code != kCLErrorLocationUnknown) {
+        [_subscriber sendError:[NSError errorWithDomain:MMPRCLSignalErrorDomain
+                                                   code:MMPRCLSignalErrorServiceUnavailable
+                                               userInfo:nil]];
+    }
+}
+
+- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    if (status == kCLAuthorizationStatusDenied || status == kCLAuthorizationStatusRestricted) {
+        [_subscriber sendError:[NSError errorWithDomain:MMPRCLSignalErrorDomain
+                                                   code:MMPRCLSignalErrorServiceUnavailable
+                                               userInfo:nil]];
+    }
 }
 
 @end

@@ -32,6 +32,7 @@
     MMPReactiveCoreLocation *rcl = [MMPReactiveCoreLocation instance];
     
     @weakify(self)
+    
     [[rcl.locationSignal takeUntil:_doneSignal] subscribeNext:^(CLLocation *nextLocation) {
         @strongify(self)
         self.labelLatLon.text = [NSString stringWithFormat:@"(%f, %f, %f)", nextLocation.coordinate.latitude, nextLocation.coordinate.longitude, nextLocation.horizontalAccuracy];
@@ -39,6 +40,18 @@
     }];
     
     [rcl start];
+    
+    /*
+    [[rcl singleLocationSignalWithAccuracy:100.0 timeout:15.0]
+          subscribeNext:^(CLLocation *location) {
+              @strongify(self)
+              self.labelLatLon.text = [NSString stringWithFormat:@"(%f, %f, %f)", location.coordinate.latitude, location.coordinate.longitude, location.horizontalAccuracy];
+              NSLog(@"next location updated: (%f, %f, %f)", location.coordinate.latitude, location.coordinate.longitude, location.horizontalAccuracy);
+          }
+          error:^(NSError *error) {
+              NSLog(@"Ouch! error: %@", error);
+          }];
+     */
 }
 
 - (void)viewWillDisappear:(BOOL)animated
