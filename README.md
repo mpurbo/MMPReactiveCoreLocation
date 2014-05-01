@@ -3,8 +3,7 @@
 [![Version](http://cocoapod-badges.herokuapp.com/v/MMPReactiveCoreLocation/badge.png)](http://cocoadocs.org/docsets/MMPReactiveCoreLocation)
 [![Platform](http://cocoapod-badges.herokuapp.com/p/MMPReactiveCoreLocation/badge.png)](http://cocoadocs.org/docsets/MMPReactiveCoreLocation)
 
-MMPReactiveCoreLocation is a reactive library for using CoreLocation with ReactiveCocoa. Currently this library only provides
-basic signal for receiving location updates.
+MMPReactiveCoreLocation is a reactive library for using CoreLocation with ReactiveCocoa. 
 
 Features:
 * Singleton instance managing CLLocationManager(s). The instance manages one default location manager for app-wide location subscription, and short-lived location managers for one-time location requests.

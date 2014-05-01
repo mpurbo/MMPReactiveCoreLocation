@@ -3,11 +3,12 @@ Pod::Spec.new do |s|
   s.version          = "0.2.0"
   s.summary          = "A reactive CoreLocation wrapper for use with ReactiveCocoa"
   s.description      = <<-DESC
-                       MMPReactiveCoreLocation is a reactive library for using CoreLocation with ReactiveCocoa.
+                       MMPReactiveCoreLocation is a reactive library for using CoreLocation with ReactiveCocoa. 
 
                        Features:
-                       * Singleton instance managing CLLocationManager so you don't have to.
-                       * Providing easy to use signals for subscribing to location updates.
+                       * Singleton instance managing CLLocationManager(s). The instance manages one default location manager for app-wide location subscription, and short-lived location managers for one-time location requests.
+                       * Easy to use signals for subscribing to location updates.
+                       * Signals for customizable one-time location requests.
                        DESC
   s.homepage         = "https://github.com/mpurbo/MMPReactiveCoreLocation"
   s.license          = 'MIT'
