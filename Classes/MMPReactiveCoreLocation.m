@@ -48,6 +48,18 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
 
 @end
 
+@interface MMPSharedSignalDelegate : NSObject<CLLocationManagerDelegate>
+
+@property(strong, nonatomic) NSMutableArray *subscribers;
+@property(assign, nonatomic) NSTimeInterval locationAgeLimit;
+
+- (instancetype)initWithLocationAgeLimit:(NSTimeInterval)locationAgeLimit;
+
+- (void)addSubscriber:(id<RACSubscriber>)subscriber;
+- (void)removeSubscriber:(id<RACSubscriber>)subscriber;
+
+@end
+
 @interface MMPReactiveCoreLocation()<CLLocationManagerDelegate>
 
 @property(nonatomic, strong) CLLocationManager *defaultLocationManager;
@@ -56,6 +68,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
 @property(nonatomic, strong, readwrite) CLLocation *lastKnownLocation;
 
 @property(nonatomic, strong) NSMutableArray *singleSignalDelegates;
+@property(nonatomic, strong) NSMutableDictionary *autoSignalLocationManagers;
 
 @end
 
@@ -87,6 +100,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
         _defaultLocationManager.delegate = self;
         
         self.singleSignalDelegates = [NSMutableArray array];
+        self.autoSignalLocationManagers = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -162,6 +176,8 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
     return _defaultLocationManagerDelegateSubject;
 }
 
+#pragma mark Standard location signals
+
 - (RACSignal *)locationSignal
 {
     return [self defaultLocationManagerDelegateSubject];
@@ -182,6 +198,8 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                    }]
                    timeout:timeout onScheduler:[RACScheduler scheduler]];
 }
+
+#pragma mark One-time location signals
 
 - (RACSignal *)singleLocationSignal
 {
@@ -272,6 +290,124 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
     } else {
         return signal;
     }
+}
+
+#pragma mark Automatic location signals
+
+- (NSString *)locationManagerKeyForPausesLocationUpdatesAutomatically:(BOOL)pausesLocationUpdatesAutomatically
+                                                       distanceFilter:(CLLocationDistance)distanceFilter
+                                                      desiredAccuracy:(CLLocationAccuracy)desiredAccuracy
+                                                         activityType:(CLActivityType)activityType
+                                                   locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
+                                                     locationAgeLimit:(NSTimeInterval)locationAgeLimit
+{
+    return [NSString stringWithFormat:@"%@-%f-%f-%d-%d-%f",
+            pausesLocationUpdatesAutomatically ? @"a" : @"m",
+            distanceFilter,
+            desiredAccuracy,
+            activityType,
+            locationUpdateType,
+            locationAgeLimit];
+}
+
+- (RACSignal *)autoLocationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy
+                           locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType;
+{
+    return [self autoLocationSignalWithPausesLocationUpdatesAutomatically:_pausesLocationUpdatesAutomatically
+                                                           distanceFilter:_distanceFilter
+                                                          desiredAccuracy:desiredAccuracy
+                                                             activityType:_activityType
+                                                       locationUpdateType:locationUpdateType
+                                                         locationAgeLimit:_locationAgeLimit];
+}
+
+- (RACSignal *)autoLocationSignalWithPausesLocationUpdatesAutomatically:(BOOL)pausesLocationUpdatesAutomatically
+                                                         distanceFilter:(CLLocationDistance)distanceFilter
+                                                        desiredAccuracy:(CLLocationAccuracy)desiredAccuracy
+                                                           activityType:(CLActivityType)activityType
+                                                     locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
+                                                       locationAgeLimit:(NSTimeInterval)locationAgeLimit
+{
+    @weakify(self)
+    
+    RACSignal *signal = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+        
+        @strongify(self)
+        
+        NSString *lmKey = [self locationManagerKeyForPausesLocationUpdatesAutomatically:pausesLocationUpdatesAutomatically
+                                                                         distanceFilter:distanceFilter
+                                                                        desiredAccuracy:desiredAccuracy
+                                                                           activityType:activityType
+                                                                     locationUpdateType:locationUpdateType
+                                                                       locationAgeLimit:locationAgeLimit];
+        
+        NSMutableDictionary *autoSignalLocationManagers = self.autoSignalLocationManagers;
+        
+        // checks if location manager with required parameters has been created before
+        @synchronized(autoSignalLocationManagers) {
+            CLLocationManager *sharedLocationManager = [autoSignalLocationManagers objectForKey:lmKey];
+            if (!sharedLocationManager) {
+                // need to create a new one
+                sharedLocationManager = [[CLLocationManager alloc] init];
+                MMPSharedSignalDelegate *delegate = [[MMPSharedSignalDelegate alloc] initWithLocationAgeLimit:locationAgeLimit];
+                
+                sharedLocationManager.pausesLocationUpdatesAutomatically = pausesLocationUpdatesAutomatically;
+                sharedLocationManager.distanceFilter = distanceFilter;
+                sharedLocationManager.desiredAccuracy = desiredAccuracy;
+                sharedLocationManager.activityType = activityType;
+                sharedLocationManager.delegate = delegate;
+                
+                if (locationUpdateType == MMPRCLLocationUpdateTypeStandard) {
+                    [sharedLocationManager startUpdatingLocation];
+                } else if (locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) {
+                    [sharedLocationManager startMonitoringSignificantLocationChanges];
+                } else {
+                    NSLog(@"[WARN] Unknown location update type: %ld, not doing anything.", (long)locationUpdateType);
+                }
+                
+                [autoSignalLocationManagers setObject:sharedLocationManager forKey:lmKey];
+                
+                MMPRxCL_LOG(@"shared CL manager started")
+            }
+            [(MMPSharedSignalDelegate *)sharedLocationManager.delegate addSubscriber:subscriber];
+            MMPRxCL_LOG(@"subscriber added to shared CL manager with key = %@, now broadcasting location to %d subscribers", lmKey, [((MMPSharedSignalDelegate *)sharedLocationManager.delegate).subscribers count])
+        }
+        
+        return [RACDisposable disposableWithBlock:^{
+            
+            @synchronized(autoSignalLocationManagers) {
+                
+                CLLocationManager *sharedLocationManager = [autoSignalLocationManagers objectForKey:lmKey];
+                
+                if (sharedLocationManager) {
+                    // remove subscriber from delegate
+                    [(MMPSharedSignalDelegate *)sharedLocationManager.delegate removeSubscriber:subscriber];
+                    
+                    MMPRxCL_LOG(@"subscriber removed from shared CL manager with key = %@, now broadcasting location to %d subscribers", lmKey, [((MMPSharedSignalDelegate *)sharedLocationManager.delegate).subscribers count])
+                    
+                    // if there are no longer subscriber on the delegate, stop and dispose the shared location manager
+                    if (![((MMPSharedSignalDelegate *)sharedLocationManager.delegate).subscribers count]) {
+                        // no more subscriber
+                        if (locationUpdateType == MMPRCLLocationUpdateTypeStandard) {
+                            [sharedLocationManager stopUpdatingLocation];
+                        } else if (locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) {
+                            [sharedLocationManager stopMonitoringSignificantLocationChanges];
+                        } else {
+                            NSLog(@"[WARN] Unknown location update type: %ld, not doing anything.", (long)locationUpdateType);
+                        }
+                        [autoSignalLocationManagers removeObjectForKey:lmKey];
+                        MMPRxCL_LOG(@"subscriber removed from shared CL manager with key = %@ was disposed", lmKey)
+                    }
+                } else {
+                    // shouldn't happen
+                    NSLog(@"[ERROR] shared location manager with key %@ is no longer registered.", lmKey);
+                }
+            }
+            
+        }];
+    }];
+    
+    return signal;
 }
 
 #pragma mark CLLocationManagerDelegate implementation
@@ -369,6 +505,89 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
         [_subscriber sendError:[NSError errorWithDomain:MMPRCLSignalErrorDomain
                                                    code:MMPRCLSignalErrorServiceUnavailable
                                                userInfo:nil]];
+    }
+}
+
+@end
+
+@implementation MMPSharedSignalDelegate
+
+- (instancetype)initWithLocationAgeLimit:(NSTimeInterval)locationAgeLimit
+{
+    if (self = [super init]) {
+        self.locationAgeLimit = locationAgeLimit;
+        self.subscribers = [NSMutableArray array];
+    }
+    return self;
+}
+
+- (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
+{
+    // get latest location
+    if (![locations count]) return;
+    CLLocation *newLocation = [locations lastObject];
+    
+    // test the age of the location measurement to determine if the measurement is cached
+    // in most cases you will not want to rely on cached measurements
+    NSTimeInterval locationAge = -[newLocation.timestamp timeIntervalSinceNow];
+    if (locationAge > _locationAgeLimit) return;
+    
+    // test that the horizontal accuracy does not indicate an invalid measurement
+    if (newLocation.horizontalAccuracy < 0) return;
+    
+    MMPRxCL_LOG(@"shared CL manager updated: (%f, %f, %f)", newLocation.coordinate.latitude, newLocation.coordinate.longitude, newLocation.horizontalAccuracy)
+
+    // need to be synch because subscribers might be added/removed by signal block
+    @synchronized(self) {
+        if ([self.subscribers count]) {
+            for (id<RACSubscriber> subscriber in self.subscribers) {
+                [subscriber sendNext:[newLocation copy]];
+            }
+        }
+    }
+}
+
+- (void)addSubscriber:(id<RACSubscriber>)subscriber
+{
+    @synchronized(self) {
+        [self.subscribers addObject:subscriber];
+    }
+}
+
+- (void)removeSubscriber:(id<RACSubscriber>)subscriber
+{
+    @synchronized(self) {
+        [self.subscribers removeObject:subscriber];
+    }
+}
+
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    if (error.code != kCLErrorLocationUnknown) {
+        @synchronized(self) {
+            if ([self.subscribers count]) {
+                for (id<RACSubscriber> subscriber in self.subscribers) {
+                    [subscriber sendError:[NSError errorWithDomain:MMPRCLSignalErrorDomain
+                                                              code:MMPRCLSignalErrorServiceUnavailable
+                                                          userInfo:nil]];
+                }
+            }
+        }
+    }
+}
+
+- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    if (status == kCLAuthorizationStatusDenied || status == kCLAuthorizationStatusRestricted) {
+        @synchronized(self) {
+            if ([self.subscribers count]) {
+                for (id<RACSubscriber> subscriber in self.subscribers) {
+                    [subscriber sendError:[NSError errorWithDomain:MMPRCLSignalErrorDomain
+                                                              code:MMPRCLSignalErrorServiceUnavailable
+                                                          userInfo:nil]];
+                }
+            }
+        }
     }
 }
 

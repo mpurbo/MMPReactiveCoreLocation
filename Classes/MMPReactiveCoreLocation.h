@@ -127,6 +127,11 @@ typedef NSInteger MMPRCLLocationUpdateType;
  */
 - (void)stop;
 
+/**---------------------------------------------------------------------------------------
+ * @name Global location signals
+ *  ---------------------------------------------------------------------------------------
+ */
+
 /**
  *  Basic location signal that receives CLLocation from shared CLLocationManager managed by this class.
  *
@@ -156,6 +161,11 @@ typedef NSInteger MMPRCLLocationUpdateType;
  *  @return A location signal with specified accuracy and timeout.
  */
 - (RACSignal *)locationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy timeout:(NSTimeInterval)timeout;
+
+/**---------------------------------------------------------------------------------------
+ * @name One-time location signals
+ *  ---------------------------------------------------------------------------------------
+ */
 
 /**
  *  Requests for a single location from a private CLLocationManager specially created for the signal.
@@ -189,5 +199,71 @@ typedef NSInteger MMPRCLLocationUpdateType;
  *  @return One-time location signal with specified accuracy and timeout.
  */
 - (RACSignal *)singleLocationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy timeout:(NSTimeInterval)timeout;
+
+/**
+ *  Requests for a single location with specified parameters from a private CLLocationManager
+ *  specially created for the signal, and wait until the specified timeout.
+ *  The signal will own the CLLocationManager, start and stop it automatically.
+ *  The signal returned will send next once before completing.
+ *  Timeout will generate an error with error domain RACSignalErrorDomain
+ *  and error code RACSignalErrorTimedOut.
+ *
+ *  @param pausesLocationUpdatesAutomatically see CLLocationManager documentation for the meaning of this parameter.
+ *  @param distanceFilter                     see CLLocationManager documentation for the meaning of this parameter.
+ *  @param desiredAccuracy                    see CLLocationManager documentation for the meaning of this parameter.
+ *  @param activityType                       see CLLocationManager documentation for the meaning of this parameter.
+ *  @param locationUpdateType                 Whether the CLLocationManager should use standard location update or significant change location update.
+ *  @param locationAgeLimit                   How old the location should be (to determine whether the location is cached or not). By default it's 5 seconds.
+ *  @param timeout                            Timeout in seconds. Set to 0 for no timeout.
+ *
+ *  @return One-time location signal with specified parameters.
+ */
+- (RACSignal *)singleLocationSignalWithPausesLocationUpdatesAutomatically:(BOOL)pausesLocationUpdatesAutomatically
+                                                           distanceFilter:(CLLocationDistance)distanceFilter
+                                                          desiredAccuracy:(CLLocationAccuracy)desiredAccuracy
+                                                             activityType:(CLActivityType)activityType
+                                                       locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
+                                                         locationAgeLimit:(NSTimeInterval)locationAgeLimit
+                                                                  timeout:(NSTimeInterval)timeout;
+
+/**---------------------------------------------------------------------------------------
+ * @name Automatic location signals
+ *  ---------------------------------------------------------------------------------------
+ */
+
+/**
+ *  Requests for a signal from a location manager with the specified parameters. The location manager
+ *  emitting location for this signal will be created, started, and stopped automatically by this class
+ *  and shared between signals and subscribers with the same location manager specifications.
+ *
+ *  @param desiredAccuracy    Desired accuracy in meters.
+ *  @param locationUpdateType Whether the CLLocationManager should use standard location update or significant change location update.
+ *
+ *  @return Location signal producing locations with parameters as specified.
+ */
+- (RACSignal *)autoLocationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy
+                           locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType;
+
+/**
+ *  Requests for a signal from a location manager with the specified parameters. The location manager 
+ *  emitting location for this signal will be created, started, and stopped automatically by this class
+ *  and shared between signals and subscribers with the same location manager specifications.
+ *
+ *  @param pausesLocationUpdatesAutomatically see CLLocationManager documentation for the meaning of this parameter.
+ *  @param distanceFilter                     see CLLocationManager documentation for the meaning of this parameter.
+ *  @param desiredAccuracy                    see CLLocationManager documentation for the meaning of this parameter.
+ *  @param activityType                       see CLLocationManager documentation for the meaning of this parameter.
+ *  @param locationUpdateType                 Whether the CLLocationManager should use standard location update or significant change location update.
+ *  @param locationAgeLimit                   How old the location should be (to determine whether the location is cached or not). By default it's 5 seconds.
+ *  @param timeout                            Timeout in seconds. Set to 0 for no timeout.
+ *
+ *  @return Location signal producing locations with parameters as specified.
+ */
+- (RACSignal *)autoLocationSignalWithPausesLocationUpdatesAutomatically:(BOOL)pausesLocationUpdatesAutomatically
+                                                         distanceFilter:(CLLocationDistance)distanceFilter
+                                                        desiredAccuracy:(CLLocationAccuracy)desiredAccuracy
+                                                           activityType:(CLActivityType)activityType
+                                                     locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
+                                                       locationAgeLimit:(NSTimeInterval)locationAgeLimit;
 
 @end
