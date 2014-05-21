@@ -81,6 +81,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
         _activityType = CLActivityTypeOther;
         _locationUpdateType = MMPRCLLocationUpdateTypeStandard;
         _locationAgeLimit = MMPRCL_LOCATION_AGE_LIMIT_DEFAULT;
+        _defaultTimeout = MMPRCL_LOCATION_TIMEOUT_DEFAULT;
         
         _lastKnownLocation = nil;
         _defaultLocationManager = [[CLLocationManager alloc] init];
@@ -191,7 +192,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                                                                activityType:_activityType
                                                          locationUpdateType:MMPRCLLocationUpdateTypeStandard
                                                            locationAgeLimit:_locationAgeLimit
-                                                                    timeout:-1.0];
+                                                                    timeout:self.defaultTimeout];
 }
 
 - (RACSignal *)singleLocationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy
@@ -202,7 +203,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                                                                activityType:_activityType
                                                          locationUpdateType:MMPRCLLocationUpdateTypeStandard
                                                            locationAgeLimit:_locationAgeLimit
-                                                                    timeout:-1.0];
+                                                                    timeout:self.defaultTimeout];
 }
 
 - (RACSignal *)singleLocationSignalWithAccuracy:(CLLocationAccuracy)desiredAccuracy timeout:(NSTimeInterval)timeout
@@ -260,6 +261,8 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
             } else {
                 NSLog(@"[WARN] Unknown location update type: %ld, not doing anything.", (long)locationUpdateType);
             }
+            
+            locationManager.delegate = nil; // fix delegate leak bug
             
             [self.singleSignalDelegates removeObject:delegate];
             
