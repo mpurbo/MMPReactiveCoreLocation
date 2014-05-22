@@ -27,10 +27,15 @@
 {
     [super viewWillAppear:animated];
     
+    
+    
+    /*
     self.doneSignal = [RACSubject subject];
 	
     MMPReactiveCoreLocation *rcl = [MMPReactiveCoreLocation instance];
+    */
     
+    /*
     @weakify(self)
     
     [[rcl.locationSignal takeUntil:_doneSignal] subscribeNext:^(CLLocation *nextLocation) {
@@ -40,6 +45,7 @@
     }];
     
     [rcl start];
+    */
     
     /*
     [[rcl singleLocationSignalWithAccuracy:100.0 timeout:15.0]
@@ -57,9 +63,9 @@
 - (void)viewWillDisappear:(BOOL)animated
 {
     // so that this controller won't receive any more location signals
-    [self.doneSignal sendCompleted];
+    //[self.doneSignal sendCompleted];
     
-    [[MMPReactiveCoreLocation instance] stop];
+    //[[MMPReactiveCoreLocation instance] stop];
     [super viewWillDisappear:animated];
 }
 
@@ -69,4 +75,15 @@
     // Dispose of any resources that can be recreated.
 }
 
+- (IBAction)buttonGlobalTouchUpInside:(id)sender {
+}
+
+- (IBAction)buttonSingleTouchUpInside:(id)sender {
+}
+
+- (IBAction)buttonAuto1TouchUpInside:(id)sender {
+}
+
+- (IBAction)buttonAuto2TouchUpInside:(id)sender {
+}
 @end
