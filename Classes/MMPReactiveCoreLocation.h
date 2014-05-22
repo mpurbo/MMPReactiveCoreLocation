@@ -28,6 +28,7 @@
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
 #define MMPRCL_LOCATION_AGE_LIMIT_DEFAULT 5.0
+#define MMPRCL_LOCATION_TIMEOUT_DEFAULT -1
 
 /**
  *  Error domain for errors produced by the library.
@@ -67,6 +68,12 @@ typedef NSInteger MMPRCLLocationUpdateType;
  *  See CLLocationManager documentation for more information on this property.
  */
 @property(assign, nonatomic) CLLocationAccuracy desiredAccuracy;
+
+/**
+ *  How long will manager wait for location update. Default to infinite(-1).
+ *  Measured in seconds.
+ */
+@property(assign, nonatomic) NSTimeInterval defaultTimeout;
 
 /**
  *  Default value for activityType to be set to default CLLocationManager.
