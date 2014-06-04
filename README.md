@@ -104,7 +104,7 @@ See the [class reference](http://cocoadocs.org/docsets/MMPReactiveCoreLocation) 
 
 ### One-time Location Requests
 
-Application-wide location subscription is usually only suitable for GPS-heavy location tracking applications. For most of other type of applications, occasional one-time location requests is usually sufficient and it's much less taxing on the battery. Following example shows how to request for such location:
+Application-wide location subscription is usually only suitable for GPS-heavy location tracking applications. For most of other type of applications, occasional one-time location requests is usually sufficient and it's much less taxing on the battery. Use `single*` methods to request for such location as shown in the following example:
 
 ```objectivec
 // give me one-time location.
@@ -125,6 +125,8 @@ Application-wide location subscription is usually only suitable for GPS-heavy lo
 For this kind of one-time location request, the `MMPReactiveCoreLocation` instance will create a short-lived location manager, start and stop it automatically so you don't need to call `start` and `stop` manually.
 
 ### Multiple Location Managers
+
+If you need to subscribe to signals with different location manager specifications/parameters, then you can use `auto*` methods as shown in the following example:
 
 ```objectivec
 // let's do one standard update with best accuracy
