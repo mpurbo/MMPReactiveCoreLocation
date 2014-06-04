@@ -239,9 +239,18 @@ typedef NSInteger MMPRCLLocationUpdateType;
  */
 
 /**
+ *  Requests for a signal from a location manager with the specified update type. The location manager
+ *  emitting location for this signal will be created, started, and stopped automatically by the signal.
+ *
+ *  @param locationUpdateType Whether the CLLocationManager should use standard location update or significant change location update.
+ *
+ *  @return Location signal producing locations with the specified update type.
+ */
+- (RACSignal *)autoLocationSignalWithLocationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType;
+
+/**
  *  Requests for a signal from a location manager with the specified parameters. The location manager
- *  emitting location for this signal will be created, started, and stopped automatically by this class
- *  and shared between signals and subscribers with the same location manager specifications.
+ *  emitting location for this signal will be created, started, and stopped automatically by the signal.
  *
  *  @param desiredAccuracy    Desired accuracy in meters.
  *  @param locationUpdateType Whether the CLLocationManager should use standard location update or significant change location update.
@@ -253,8 +262,7 @@ typedef NSInteger MMPRCLLocationUpdateType;
 
 /**
  *  Requests for a signal from a location manager with the specified parameters. The location manager 
- *  emitting location for this signal will be created, started, and stopped automatically by this class
- *  and shared between signals and subscribers with the same location manager specifications.
+ *  emitting location for this signal will be created, started, and stopped automatically by the signal.
  *
  *  @param pausesLocationUpdatesAutomatically see CLLocationManager documentation for the meaning of this parameter.
  *  @param distanceFilter                     see CLLocationManager documentation for the meaning of this parameter.
