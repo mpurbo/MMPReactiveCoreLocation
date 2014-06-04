@@ -9,3 +9,12 @@ Initial release.
 * More robust location updating logic.
 * Signals with accuracy and timeout.
 
+## 0.2.0
+
+* Signals for one-time location request.
+
+## 0.3.0
+
+* Delegate leak bug-fix (Credit: [longlongjump](https://github.com/longlongjump))
+* Custom location manager signals.
+* Updated usage examples.

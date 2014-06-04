@@ -6,9 +6,12 @@
 MMPReactiveCoreLocation is a reactive library for using CoreLocation with ReactiveCocoa. 
 
 Features:
-* Singleton instance managing CLLocationManager(s). The instance manages one default location manager for app-wide location subscription, and short-lived location managers for one-time location requests.
+* Singleton instance managing CLLocationManager(s). 
 * Easy to use signals for subscribing to location updates.
-* Signals for customizable one-time location requests.
+* 3 common usage patterns: 
+    - global location manager for app-wide location subscription; 
+    - short-lived location managers for one-time location requests; 
+    - subscribing to multiple custom location managers with different specifications.
 
 ## Installation
 
@@ -99,7 +102,7 @@ Before calling `start` on the singleton instance, you can also configure the loc
 ```
 See the [class reference](http://cocoadocs.org/docsets/MMPReactiveCoreLocation) for detailed information on these configurations.
 
-### One-time Location Requests.
+### One-time Location Requests
 
 Application-wide location subscription is usually only suitable for GPS-heavy location tracking applications. For most of other type of applications, occasional one-time location requests is usually sufficient and it's much less taxing on the battery. Following example shows how to request for such location:
 
@@ -120,6 +123,46 @@ Application-wide location subscription is usually only suitable for GPS-heavy lo
 ```
 
 For this kind of one-time location request, the `MMPReactiveCoreLocation` instance will create a short-lived location manager, start and stop it automatically so you don't need to call `start` and `stop` manually.
+
+### Multiple Location Managers
+
+```objectivec
+// let's do one standard update with best accuracy
+[[[MMPReactiveCoreLocation instance]
+   autoLocationSignalWithLocationUpdateType:MMPRCLLocationUpdateTypeStandard]
+   subscribeNext:^(CLLocation *location) {
+       NSLog(@"Auto signal 1 location updated: (%f, %f, %f)", location.coordinate.latitude, location.coordinate.longitude, location.horizontalAccuracy);
+   }
+   error:^(NSError *error) {
+       NSLog(@"Ouch! Auto signal 1 error: %@", error);
+   }
+   completed:^{
+       NSLog(@"Auto signal 1 completed");
+   }];
+
+// then have another one with significant change and 100.0 m accuracy 
+[[[MMPReactiveCoreLocation instance]
+   autoLocationSignalWithAccuracy:100.0 locationUpdateType:MMPRCLLocationUpdateTypeSignificantChange]
+   subscribeNext:^(CLLocation *location) {
+       NSLog(@"Auto signal 2 location updated: (%f, %f, %f)", location.coordinate.latitude, location.coordinate.longitude, location.horizontalAccuracy);
+   }
+   error:^(NSError *error) {
+       NSLog(@"Ouch! Auto signal 2 error: %@", error);
+   }
+   completed:^{
+       NSLog(@"Auto signal 2 completed");
+   }];
+```
+
+For both of these signals, the `MMPReactiveCoreLocation` instance will create a special location manager, start and stop it automatically so you don't need to call `start` and `stop` manually.
+
+Please check out the sample code for some more subtleties that you may need to be aware of.
+
+## Roadmap
+
+* 0.4: iBeacon support.
+* 0.5: Region monitoring.
+* >0.6: All other remaining CoreLocation functions.
 
 ## Documentation
 
