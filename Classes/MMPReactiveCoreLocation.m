@@ -50,6 +50,36 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
 
 @end
 
+@interface MMPBeaconSignalDelegate : NSObject<CLLocationManagerDelegate, CBPeripheralManagerDelegate>
+
+@property(nonatomic, weak) id<RACSubscriber>subscriber;
+@property(nonatomic, weak) CLLocationManager *locationManager;
+@property(nonatomic, weak) CBPeripheralManager *peripheralManager;
+@property(nonatomic, weak) CLBeaconRegion *beaconRegion;
+@property(nonatomic, assign) MMPRCLBeaconSignalType beaconSignalType;
+@property(nonatomic, assign) BOOL autoStartOnStatusChange;
+
+- (instancetype)initWithSubscriber:(id<RACSubscriber>)subscriber
+                   locationManager:(CLLocationManager *)locationManager
+                 peripheralManager:(CBPeripheralManager *)peripheralManager
+                      beaconRegion:(CLBeaconRegion *)beaconRegion
+                  beaconSignalType:(MMPRCLBeaconSignalType)beaconSignalType
+           autoStartOnStatusChange:(BOOL)autoStartOnStatusChange;
+
+@end
+
+@interface MMPRCLBeaconEvent()
+
+@property (nonatomic, readwrite, assign) MMPRCLBeaconEventType eventType;
+@property (nonatomic, readwrite, assign) CBPeripheralManagerState peripheralState;
+@property (nonatomic, readwrite, assign) CLAuthorizationStatus authorizationStatus;
+@property (nonatomic, readwrite, assign) CLRegionState regionState;
+@property (nonatomic, readwrite, assign) CLRegion *region;
+@property (nonatomic, readwrite, strong) NSArray *rangedBeacons;
+@property (nonatomic, readwrite, strong) CLBeaconRegion *rangedRegion;
+
+@end
+
 @interface MMPReactiveCoreLocation()<CLLocationManagerDelegate>
 
 @property(nonatomic, strong) CLLocationManager *defaultLocationManager;
@@ -57,7 +87,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
 @property(assign, nonatomic) MMPRCLLocationUpdateType lastUsedlocationUpdateType;
 @property(nonatomic, strong, readwrite) CLLocation *lastKnownLocation;
 
-@property(nonatomic, strong) NSMutableArray *singleSignalDelegates;
+@property(nonatomic, strong) NSMutableArray *signalDelegates;
 
 @end
 
@@ -89,7 +119,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
         _defaultLocationManager = [[CLLocationManager alloc] init];
         _defaultLocationManager.delegate = self;
         
-        self.singleSignalDelegates = [NSMutableArray array];
+        self.signalDelegates = [NSMutableArray array];
     }
     return self;
 }
@@ -210,7 +240,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                                                                    locationAgeLimit:locationAgeLimit
                                                                          signalOnce:signalOnce];
         // so that the delegate can be retained
-        [self.singleSignalDelegates addObject:delegate];
+        [self.signalDelegates addObject:delegate];
         
         locationManager.pausesLocationUpdatesAutomatically = pausesLocationUpdatesAutomatically;
         locationManager.distanceFilter = distanceFilter;
@@ -229,6 +259,9 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
         MMPRxCL_LOG(@"custom CL manager started")
         
         return [RACDisposable disposableWithBlock:^{
+            
+            locationManager.delegate = nil; // fix delegate leak bug
+            
             if (locationUpdateType == MMPRCLLocationUpdateTypeStandard) {
                 [locationManager stopUpdatingLocation];
             } else if (locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) {
@@ -237,11 +270,9 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                 NSLog(@"[WARN] Unknown location update type: %ld, not doing anything.", (long)locationUpdateType);
             }
             
-            locationManager.delegate = nil; // fix delegate leak bug
+            [self.signalDelegates removeObject:delegate];
             
-            [self.singleSignalDelegates removeObject:delegate];
-            
-            MMPRxCL_LOG(@"custom CL manager stopped, number of delegates = %d", [self.singleSignalDelegates count])
+            MMPRxCL_LOG(@"custom CL manager stopped, number of delegates = %d", [self.signalDelegates count])
         }];
     }];
     
@@ -345,6 +376,122 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                                                                  signalOnce:NO];
 }
 
+#pragma mark Beacon location signals
+
+- (RACSignal *)beaconWithProximityUUID:(NSUUID *)proximityUUID
+                                 major:(NSNumber *)major
+                                 minor:(NSNumber *)minor
+                            identifier:(NSString *)identifier
+                         notifyOnEntry:(BOOL)notifyOnEntry
+                          notifyOnExit:(BOOL)notifyOnExit
+             notifyEntryStateOnDisplay:(BOOL)notifyEntryStateOnDisplay
+                      beaconSignalType:(MMPRCLBeaconSignalType)beaconSignalType
+               autoStartOnStatusChange:(BOOL)autoStartOnStatusChange
+{
+    @weakify(self)
+    
+    RACSignal *signal = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+        
+        @strongify(self)
+        
+        // initialize beacon region
+        
+        CLBeaconRegion *beaconRegion = nil;
+        if (major) {
+            if (minor) {
+                beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID
+                                                                       major:[major unsignedIntegerValue]
+                                                                       minor:[minor unsignedIntegerValue]
+                                                                  identifier:identifier];
+            } else {
+                beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID
+                                                                       major:[major unsignedIntegerValue]
+                                                                  identifier:identifier];
+            }
+        } else {
+            beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID
+                                                              identifier:identifier];
+        }
+        beaconRegion.notifyEntryStateOnDisplay = notifyEntryStateOnDisplay;
+        beaconRegion.notifyOnEntry = notifyOnEntry;
+        beaconRegion.notifyOnExit = notifyOnExit;
+        
+        // managers
+        
+        CLLocationManager *locationManager = [[CLLocationManager alloc] init];
+        CBPeripheralManager *peripheralManager = [[CBPeripheralManager alloc] init];
+        
+        // setup delegate
+        
+        MMPBeaconSignalDelegate *delegate = [[MMPBeaconSignalDelegate alloc] initWithSubscriber:subscriber
+                                                                                locationManager:locationManager
+                                                                              peripheralManager:peripheralManager
+                                                                                   beaconRegion:beaconRegion
+                                                                               beaconSignalType:beaconSignalType
+                                                                        autoStartOnStatusChange:autoStartOnStatusChange];
+        
+        locationManager.delegate = delegate;
+        peripheralManager.delegate = delegate;
+        
+        // so that the delegate can be retained
+        [self.signalDelegates addObject:delegate];
+        
+        if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorized && peripheralManager.state == CBPeripheralManagerStatePoweredOn) {
+            if (beaconSignalType == MMPRCLBeaconSignalTypeMonitor) {
+                [locationManager startMonitoringForRegion:beaconRegion];
+            } else if (beaconSignalType == MMPRCLBeaconSignalTypeRange) {
+                [locationManager startRangingBeaconsInRegion:beaconRegion];
+            }
+        }
+        
+        return [RACDisposable disposableWithBlock:^{
+            
+            locationManager.delegate = nil;
+            peripheralManager.delegate = nil;
+            
+            if (beaconSignalType == MMPRCLBeaconSignalTypeMonitor) {
+                [locationManager stopMonitoringForRegion:beaconRegion];
+            } else if (beaconSignalType == MMPRCLBeaconSignalTypeRange) {
+                [locationManager stopRangingBeaconsInRegion:beaconRegion];
+            }
+            
+            [self.signalDelegates removeObject:delegate];
+            
+            MMPRxCL_LOG(@"custom CL manager stopped, number of delegates = %d", [self.signalDelegates count])
+        }];
+    }];
+    
+    return signal;
+}
+
+- (RACSignal *)beaconMonitorWithProximityUUID:(NSUUID *)proximityUUID
+                                   identifier:(NSString *)identifier
+{
+    return [self beaconWithProximityUUID:proximityUUID
+                                   major:nil
+                                   minor:nil
+                              identifier:identifier
+                           notifyOnEntry:YES
+                            notifyOnExit:YES
+               notifyEntryStateOnDisplay:YES
+                        beaconSignalType:MMPRCLBeaconSignalTypeMonitor
+                 autoStartOnStatusChange:YES];
+}
+
+- (RACSignal *)beaconRangeWithProximityUUID:(NSUUID *)proximityUUID
+                                 identifier:(NSString *)identifier
+{
+    return [self beaconWithProximityUUID:proximityUUID
+                                   major:nil
+                                   minor:nil
+                              identifier:identifier
+                           notifyOnEntry:YES
+                            notifyOnExit:YES
+               notifyEntryStateOnDisplay:YES
+                        beaconSignalType:MMPRCLBeaconSignalTypeRange
+                 autoStartOnStatusChange:YES];
+}
+
 #pragma mark CLLocationManagerDelegate implementation
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
@@ -390,6 +537,8 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
 }
 
 @end
+
+#pragma mark - MMPSignalDelegate implementation
 
 @implementation MMPSignalDelegate
 
@@ -450,3 +599,139 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
 }
 
 @end
+
+#pragma mark - MMPBeaconSignalDelegate implementation
+
+@implementation MMPBeaconSignalDelegate
+
+- (instancetype)initWithSubscriber:(id<RACSubscriber>)subscriber
+                   locationManager:(CLLocationManager *)locationManager
+                 peripheralManager:(CBPeripheralManager *)peripheralManager
+                      beaconRegion:(CLBeaconRegion *)beaconRegion
+                  beaconSignalType:(MMPRCLBeaconSignalType)beaconSignalType
+           autoStartOnStatusChange:(BOOL)autoStartOnStatusChange
+{
+    if (self = [super init]) {
+        self.subscriber = subscriber;
+        self.locationManager = locationManager;
+        self.peripheralManager = peripheralManager;
+        self.beaconRegion = beaconRegion;
+        self.beaconSignalType = beaconSignalType;
+        self.autoStartOnStatusChange = autoStartOnStatusChange;
+    }
+    return self;
+}
+
+- (BOOL)available
+{
+    return ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorized &&
+            self.peripheralManager.state == CBPeripheralManagerStatePoweredOn);
+}
+
+#pragma mark CLLocationManagerDelegate implementation
+
+- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    // notify subscriber on location authorization event change
+    MMPRCLBeaconEvent *event = [[MMPRCLBeaconEvent alloc] init];
+    event.eventType = MMPRCLBeaconEventTypeAuthorizationStatusUpdated;
+    event.authorizationStatus = status;
+    [_subscriber sendNext:event];
+    
+    if (_autoStartOnStatusChange) {
+        // start/stop monitoring/ranging automatically on status change
+        if (status == kCLAuthorizationStatusAuthorized) {
+            if ([self available]) {
+                if (_beaconSignalType == MMPRCLBeaconSignalTypeMonitor) {
+                    [_locationManager startMonitoringForRegion:_beaconRegion];
+                } else if (_beaconSignalType == MMPRCLBeaconSignalTypeRange) {
+                    [_locationManager startRangingBeaconsInRegion:_beaconRegion];
+                }
+            } else {
+                NSLog(@"[WARN] Location manager is authorized but bluetooth is not on, beacon monitoring/ranging will NOT be started");
+            }
+        } else {
+            if (_beaconSignalType == MMPRCLBeaconSignalTypeMonitor) {
+                [_locationManager stopMonitoringForRegion:_beaconRegion];
+            } else if (_beaconSignalType == MMPRCLBeaconSignalTypeRange) {
+                [_locationManager stopRangingBeaconsInRegion:_beaconRegion];
+            }
+        }
+    }
+}
+
+- (void)locationManager:(CLLocationManager *)manager didDetermineState:(CLRegionState)state forRegion:(CLRegion *)region
+{
+    MMPRCLBeaconEvent *event = [[MMPRCLBeaconEvent alloc] init];
+    event.eventType = MMPRCLBeaconEventTypeRegionStateUpdated;
+    event.regionState = state;
+    event.region = [region copy];
+    [_subscriber sendNext:event];
+}
+
+- (void)locationManager:(CLLocationManager*)manager didRangeBeacons:(NSArray*)beacons inRegion:(CLBeaconRegion*)region
+{
+    MMPRCLBeaconEvent *event = [[MMPRCLBeaconEvent alloc] init];
+    event.eventType = MMPRCLBeaconEventTypeRanged;
+    event.rangedBeacons = [beacons copy];
+    event.rangedRegion = [region copy];
+    [_subscriber sendNext:event];
+}
+
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    [_subscriber sendError:error];
+}
+
+- (void)locationManager:(CLLocationManager *)manager monitoringDidFailForRegion:(CLRegion *)region withError:(NSError *)error
+{
+    [_subscriber sendError:error];
+}
+
+- (void)locationManager:(CLLocationManager *)manager rangingBeaconsDidFailForRegion:(CLBeaconRegion *)region withError:(NSError *)error
+{
+    [_subscriber sendError:error];
+}
+
+#pragma mark CBPeripheralManagerDelegate implementation
+
+- (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral {
+    
+    // notify subscriber on bluetooth event
+    MMPRCLBeaconEvent *event = [[MMPRCLBeaconEvent alloc] init];
+    event.eventType = MMPRCLBeaconEventTypePeripheralStateUpdated;
+    event.peripheralState = peripheral.state;
+    [_subscriber sendNext:event];
+    
+    if (_autoStartOnStatusChange) {
+        // start/stop monitoring/ranging automatically on status change
+        if (peripheral.state == CBPeripheralManagerStatePoweredOn) {
+            MMPRxCL_LOG(@"Peripheral state updated to: CBPeripheralManagerStatePoweredOn")
+            // because bluetooth has just been turned on, resume monitoring/ranging
+            if ([self available]) {
+                if (_beaconSignalType == MMPRCLBeaconSignalTypeMonitor) {
+                    [_locationManager startMonitoringForRegion:_beaconRegion];
+                } else if (_beaconSignalType == MMPRCLBeaconSignalTypeRange) {
+                    [_locationManager startRangingBeaconsInRegion:_beaconRegion];
+                }
+            } else {
+                NSLog(@"[WARN] Bluetooth turned on but location manager is not authorized, beacon monitoring/ranging will NOT be started");
+            }
+        } else {
+            MMPRxCL_LOG(@"Peripheral state updated to: %d", peripheral.state)
+            // bluetooth is not on, stop monitoring/ranging
+            if (_beaconSignalType == MMPRCLBeaconSignalTypeMonitor) {
+                [_locationManager stopMonitoringForRegion:_beaconRegion];
+            } else if (_beaconSignalType == MMPRCLBeaconSignalTypeRange) {
+                [_locationManager stopRangingBeaconsInRegion:_beaconRegion];
+            }
+        }
+    }
+}
+
+@end
+
+@implementation MMPRCLBeaconEvent
+
+@end
+

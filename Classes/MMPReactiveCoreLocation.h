@@ -25,7 +25,10 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreLocation/CoreLocation.h>
+#import <CoreBluetooth/CoreBluetooth.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
+
+#pragma mark - Constants
 
 #define MMPRCL_LOCATION_AGE_LIMIT_DEFAULT 5.0
 #define MMPRCL_LOCATION_TIMEOUT_DEFAULT -1
@@ -45,6 +48,85 @@ enum {
     MMPRCLLocationUpdateTypeSignificantChange
 };
 typedef NSInteger MMPRCLLocationUpdateType;
+
+enum {
+    MMPRCLBeaconSignalTypeMonitor,
+    MMPRCLBeaconSignalTypeRange
+};
+typedef NSInteger MMPRCLBeaconSignalType;
+
+/**
+ *  Type of event produced by beacon signals.
+ */
+enum {
+    
+    /**
+     *  Bluetooth peripheral state has just been updated.
+     */
+    MMPRCLBeaconEventTypePeripheralStateUpdated,
+    
+    /**
+     *  Location manager's authorization status has just been updated.
+     */
+    MMPRCLBeaconEventTypeAuthorizationStatusUpdated,
+    
+    /**
+     *  State of the beacon region has just been determined.
+     */
+    MMPRCLBeaconEventTypeRegionStateUpdated,
+    
+    /**
+     *  Beacon(s) has just been ranged.
+     */
+    MMPRCLBeaconEventTypeRanged
+};
+typedef NSInteger MMPRCLBeaconEventType;
+
+#pragma mark - Beacon event
+
+/**
+ *  Beacon event produced by beacon signals.
+ */
+@interface MMPRCLBeaconEvent : NSObject
+
+/**
+ *  Type of the event determining which property value is available.
+ */
+@property (nonatomic, readonly) MMPRCLBeaconEventType eventType;
+
+/**
+ *  Bluetooth peripheral state (available only when the eventType is MMPRCLBeaconEventTypePeripheralStateUpdated).
+ */
+@property (nonatomic, readonly) CBPeripheralManagerState peripheralState;
+
+/**
+ *  Location manager's authorization status (available only when the eventType is MMPRCLBeaconEventTypeAuthorizationStatusUpdated).
+ */
+@property (nonatomic, readonly) CLAuthorizationStatus authorizationStatus;
+
+/**
+ *  Beacon region status (available only when the eventType is MMPRCLBeaconEventTypeRegionStateUpdated).
+ */
+@property (nonatomic, readonly) CLRegionState regionState;
+
+/**
+ *  Beacon region with status updated (available only when the eventType is MMPRCLBeaconEventTypeRegionStateUpdated).
+ */
+@property (nonatomic, readonly) CLRegion *region;
+
+/**
+ *  CLBeacon objects that has been successfully ranged (available only when the eventType is MMPRCLBeaconEventTypeRanged).
+ */
+@property (nonatomic, readonly) NSArray *rangedBeacons;
+
+/**
+ *  Beacon region that has been successfully ranged  (available only when the eventType is MMPRCLBeaconEventTypeRanged).
+ */
+@property (nonatomic, readonly) CLBeaconRegion *rangedRegion;
+
+@end
+
+#pragma mark - Main class
 
 /**
  *  Class providing location-related signals generated from CLLocationManager for use with ReactiveCocoa.
@@ -281,4 +363,56 @@ typedef NSInteger MMPRCLLocationUpdateType;
                                                      locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
                                                        locationAgeLimit:(NSTimeInterval)locationAgeLimit;
 
+/**---------------------------------------------------------------------------------------
+ * @name iBeacon signals
+ *  ---------------------------------------------------------------------------------------
+ */
+
+/**
+ *  Monitor beacon with specified UUID and identifier.
+ *
+ *  @param proximityUUID Beacon's UUID.
+ *  @param identifier    Beacon's unique ID.
+ *
+ *  @return iBeacon signal for monitoring.
+ */
+- (RACSignal *)beaconMonitorWithProximityUUID:(NSUUID *)proximityUUID
+                                   identifier:(NSString *)identifier;
+
+/**
+ *  Range beacon with specified UUID and identifier.
+ *
+ *  @param proximityUUID Beacon's UUID.
+ *  @param identifier    Beacon's unique ID.
+ *
+ *  @return iBeacon signal for ranging.
+ */
+- (RACSignal *)beaconRangeWithProximityUUID:(NSUUID *)proximityUUID
+                                 identifier:(NSString *)identifier;
+
+/**
+ *  iBeacon signal transmitting iBeacon-related events (MMPRCLBeaconEvent) for beacon
+ *  with details as specified.
+ *
+ *  @param proximityUUID             Beacon's UUID.
+ *  @param major                     Beacon's group ID.
+ *  @param minor                     Beacon's specific ID.
+ *  @param identifier                Beacon's unique ID.
+ *  @param notifyOnEntry             Whether entrance to a beacon's region should generate an event.
+ *  @param notifyOnExit              Whether exit from a beacon's region should generate an event.
+ *  @param notifyEntryStateOnDisplay Whether beacon notifications are sent when the device’s display is on.
+ *  @param beaconSignalType          Type of beacon signal (monitoring or ranging).
+ *  @param autoStartOnStatusChange   Whether monitoring/ranging should be started/stopped automatically when bluetooth & location manager becoming available/unavailable.
+ *
+ *  @return iBeacon signal.
+ */
+- (RACSignal *)beaconWithProximityUUID:(NSUUID *)proximityUUID
+                                 major:(NSNumber *)major
+                                 minor:(NSNumber *)minor
+                            identifier:(NSString *)identifier
+                         notifyOnEntry:(BOOL)notifyOnEntry
+                          notifyOnExit:(BOOL)notifyOnExit
+             notifyEntryStateOnDisplay:(BOOL)notifyEntryStateOnDisplay
+                      beaconSignalType:(MMPRCLBeaconSignalType)beaconSignalType
+               autoStartOnStatusChange:(BOOL)autoStartOnStatusChange;
 @end

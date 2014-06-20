@@ -18,3 +18,8 @@ Initial release.
 * Delegate leak bug-fix (Credit: [longlongjump](https://github.com/longlongjump))
 * Custom location manager signals.
 * Updated usage examples.
+
+## 0.4.0
+
+* iBeacon signals.
+* Updated usage examples.
