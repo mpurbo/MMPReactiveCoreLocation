@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0B055A59583B492DB23ED081 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C180B19D5DB94D32BEB4AD7E /* libPods.a */; };
+		A9644D4D19543CD800D1451E /* MMPBeaconViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A9644D4C19543CD800D1451E /* MMPBeaconViewController.m */; };
 		A9FFD77E190BDF2F00FA10DD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77D190BDF2F00FA10DD /* Foundation.framework */; };
 		A9FFD780190BDF2F00FA10DD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77F190BDF2F00FA10DD /* CoreGraphics.framework */; };
 		A9FFD782190BDF2F00FA10DD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD781190BDF2F00FA10DD /* UIKit.framework */; };
@@ -36,6 +37,8 @@
 
 /* Begin PBXFileReference section */
 		0FF448008CB04875AE12F7F3 /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
+		A9644D4B19543CD800D1451E /* MMPBeaconViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMPBeaconViewController.h; sourceTree = "<group>"; };
+		A9644D4C19543CD800D1451E /* MMPBeaconViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MMPBeaconViewController.m; sourceTree = "<group>"; };
 		A9FFD77A190BDF2F00FA10DD /* SimpleReactiveCoreLocation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimpleReactiveCoreLocation.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9FFD77D190BDF2F00FA10DD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		A9FFD77F190BDF2F00FA10DD /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -123,6 +126,8 @@
 				A9FFD78F190BDF2F00FA10DD /* Main.storyboard */,
 				A9FFD792190BDF2F00FA10DD /* MMPViewController.h */,
 				A9FFD793190BDF2F00FA10DD /* MMPViewController.m */,
+				A9644D4B19543CD800D1451E /* MMPBeaconViewController.h */,
+				A9644D4C19543CD800D1451E /* MMPBeaconViewController.m */,
 				A9FFD795190BDF2F00FA10DD /* Images.xcassets */,
 				A9FFD784190BDF2F00FA10DD /* Supporting Files */,
 			);
@@ -292,6 +297,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A9FFD78A190BDF2F00FA10DD /* main.m in Sources */,
+				A9644D4D19543CD800D1451E /* MMPBeaconViewController.m in Sources */,
 				A9FFD78E190BDF2F00FA10DD /* MMPAppDelegate.m in Sources */,
 				A9FFD794190BDF2F00FA10DD /* MMPViewController.m in Sources */,
 			);

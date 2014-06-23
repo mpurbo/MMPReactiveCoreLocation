@@ -272,7 +272,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
             
             [self.signalDelegates removeObject:delegate];
             
-            MMPRxCL_LOG(@"custom CL manager stopped, number of delegates = %d", [self.signalDelegates count])
+            MMPRxCL_LOG(@"custom CL manager stopped, number of delegates = %ld", [self.signalDelegates count])
         }];
     }];
     
@@ -436,12 +436,14 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
         // so that the delegate can be retained
         [self.signalDelegates addObject:delegate];
         
-        if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorized && peripheralManager.state == CBPeripheralManagerStatePoweredOn) {
-            if (beaconSignalType == MMPRCLBeaconSignalTypeMonitor) {
-                [locationManager startMonitoringForRegion:beaconRegion];
-            } else if (beaconSignalType == MMPRCLBeaconSignalTypeRange) {
-                [locationManager startRangingBeaconsInRegion:beaconRegion];
-            }
+        if (beaconSignalType == MMPRCLBeaconSignalTypeMonitor) {
+            [locationManager startMonitoringForRegion:beaconRegion];
+            MMPRxCL_LOG(@"Starting to monitor region: %@", beaconRegion.proximityUUID)
+        } else if (beaconSignalType == MMPRCLBeaconSignalTypeRange) {
+            [locationManager startRangingBeaconsInRegion:beaconRegion];
+            MMPRxCL_LOG(@"Starting to range region: %@", beaconRegion.proximityUUID)
+        } else {
+            NSLog(@"[WARN] Unknown beaconSignalType: %ld, signal won't generate event.", beaconSignalType);
         }
         
         return [RACDisposable disposableWithBlock:^{
@@ -457,7 +459,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
             
             [self.signalDelegates removeObject:delegate];
             
-            MMPRxCL_LOG(@"custom CL manager stopped, number of delegates = %d", [self.signalDelegates count])
+            MMPRxCL_LOG(@"custom CL manager stopped, number of delegates = %ld", [self.signalDelegates count])
         }];
     }];
     
@@ -718,7 +720,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                 NSLog(@"[WARN] Bluetooth turned on but location manager is not authorized, beacon monitoring/ranging will NOT be started");
             }
         } else {
-            MMPRxCL_LOG(@"Peripheral state updated to: %d", peripheral.state)
+            MMPRxCL_LOG(@"Peripheral state updated to: %ld", peripheral.state)
             // bluetooth is not on, stop monitoring/ranging
             if (_beaconSignalType == MMPRCLBeaconSignalTypeMonitor) {
                 [_locationManager stopMonitoringForRegion:_beaconRegion];
