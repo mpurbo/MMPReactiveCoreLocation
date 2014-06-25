@@ -3,7 +3,7 @@
 [![Version](http://cocoapod-badges.herokuapp.com/v/MMPReactiveCoreLocation/badge.png)](http://cocoadocs.org/docsets/MMPReactiveCoreLocation)
 [![Platform](http://cocoapod-badges.herokuapp.com/p/MMPReactiveCoreLocation/badge.png)](http://cocoadocs.org/docsets/MMPReactiveCoreLocation)
 
-MMPReactiveCoreLocation is a reactive library for using CoreLocation with ReactiveCocoa. 
+MMPReactiveCoreLocation is a reactive library for using CoreLocation and iBeacon with ReactiveCocoa. 
 
 Features:
 * Singleton instance managing CLLocationManager(s). 
@@ -12,6 +12,7 @@ Features:
     - global location manager for app-wide location subscription; 
     - short-lived location managers for one-time location requests; 
     - subscribing to multiple custom location managers with different specifications.
+* Easy to use signals for subscribing to iBeacon monitoring and ranging.
 
 ## Installation
 
@@ -158,13 +159,57 @@ If you need to subscribe to signals with different location manager specificatio
 
 For both of these signals, the `MMPReactiveCoreLocation` instance will create a special location manager, start and stop it automatically so you don't need to call `start` and `stop` manually.
 
+### iBeacon Signals
+
+iBeacon related signals are available from `beacon*` methods. These signals emit beacon event object `MMPRCLBeaconEvent` with a property called `eventType` that can be used to determine the type of event produced by the signal. Following sample code shows how to monitor and range an iBeacon:
+
+```objectivec
+[[[MMPReactiveCoreLocation instance]
+   beaconMonitorWithProximityUUID:[[NSUUID alloc] initWithUUIDString:@"E2C56DB5-DFFB-48D2-B060-D0F5A71096E0"] identifier:@"com.example.apple-samplecode.AirLocate"]
+   subscribeNext:^(MMPRCLBeaconEvent *event) {
+       if (event.eventType == MMPRCLBeaconEventTypeRegionStateUpdated) {
+           // region state is updated
+           if (event.regionState == CLRegionStateInside) {
+               // entering the beacon region
+               CLBeaconRegion *beaconRegion = (CLBeaconRegion *)event.region;
+               NSLog(@"Entering beacon region: %@, now ranging...", beaconRegion.identifier);
+               
+               // start ranging the beacon
+               [[[MMPReactiveCoreLocation instance]
+                  beaconRangeWithProximityUUID:beaconRegion.proximityUUID identifier:beaconRegion.identifier]
+                  subscribeNext:^(MMPRCLBeaconEvent *rangingEvent) {
+                      NSLog(@"There are %ld beacons ranged", [rangingEvent.rangedBeacons count]);
+                      for (CLBeacon *beacon in rangingEvent.rangedBeacons) {
+                          NSString *proximity = @"Unknown";
+                          if (beacon.proximity == CLProximityFar) {
+                              proximity = @"Far";
+                          } else if (beacon.proximity == CLProximityNear) {
+                              proximity = @"Near";
+                          } else if (beacon.proximity == CLProximityImmediate) {
+                              proximity = @"Immediate";
+                          }
+                          NSLog(@"Beacon UUID: %@, proximity: %@", beacon.proximityUUID, proximity);
+                      }
+                  }];
+               
+           } else if (event.regionState == CLRegionStateOutside) {
+               // leaving the beacon region
+           }
+       }
+   }];
+```
+
+Each of the signals will allocate it's own location manager and it will automatically destroyed when the signal is completed. 
+
 Please check out the sample code for some more subtleties that you may need to be aware of.
 
 ## Roadmap
 
-* 0.4: iBeacon support.
+Please note that this library has not been extensively tested so there's bound to be bugs but I'm planning to use this in real world projects so it should be actively maintained. Contributions are welcomed.
+
 * 0.5: Region monitoring.
-* >0.6: All other remaining CoreLocation functions.
+* 0.6: All other remaining CoreLocation functions.
+* 0.7: Unit tests.
 
 ## Documentation
 
