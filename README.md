@@ -13,6 +13,7 @@ Features:
     - short-lived location managers for one-time location requests; 
     - subscribing to multiple custom location managers with different specifications.
 * Easy to use signals for subscribing to iBeacon monitoring and ranging.
+* Supports iOS 8 "Always" and "WhenInUse" authorization.
 
 ## Installation
 

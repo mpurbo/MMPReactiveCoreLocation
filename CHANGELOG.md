@@ -23,3 +23,7 @@ Initial release.
 
 * iBeacon signals.
 * Updated usage examples.
+
+## 0.4.1
+
+* Support for iOS 8 "Always" and "WhenInUse" authorization.
