@@ -97,6 +97,8 @@ Before calling `start` on the singleton instance, you can also configure the loc
     MMPReactiveCoreLocation *rcl = [MMPReactiveCoreLocation instance];
     rcl.desiredAccuracy = kCLLocationAccuracyBest;
     rcl.locationUpdateType = MMPRCLLocationUpdateTypeSignificantChange; // only monitors significant change.
+    // iOS 8 (no effect for iOS < 8)
+    rcl.locationAuthorizationType = MMPRCLLocationAuthorizationTypeAlways;
 
     [rcl start];
     return YES;

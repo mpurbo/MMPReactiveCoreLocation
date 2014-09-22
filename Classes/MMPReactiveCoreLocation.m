@@ -399,7 +399,7 @@ const NSInteger MMPRCLSignalErrorServiceFailure = 2;
                                                           desiredAccuracy:desiredAccuracy
                                                              activityType:activityType
                                                        locationUpdateType:locationUpdateType
-                                                locationAuthorizationType:(locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) ? MMPRCLLocationAuthorizationTypeAlways : MMPRCLLocationAuthorizationTypeWhenInUse
+                                                locationAuthorizationType:(locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) ? MMPRCLLocationAuthorizationTypeAlways : _locationAuthorizationType // significant change requires "Always"
                                                          locationAgeLimit:locationAgeLimit];
 }
 
