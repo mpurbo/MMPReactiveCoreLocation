@@ -158,18 +158,6 @@ const NSInteger MMPRCLSignalErrorServiceFailure = 2;
     _defaultLocationManager.desiredAccuracy = _desiredAccuracy;
     _defaultLocationManager.activityType = _activityType;
     
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-    if (_locationAuthorizationType == MMPRCLLocationAuthorizationTypeAlways) {
-        if ([_defaultLocationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
-            [_defaultLocationManager requestAlwaysAuthorization];
-        }
-    } else if (_locationAuthorizationType == MMPRCLLocationAuthorizationTypeWhenInUse) {
-        if ([_defaultLocationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
-            [_defaultLocationManager requestWhenInUseAuthorization];
-        }
-    }
-#endif
-    
     // not thread-safe, should start/stop be thread safe?
     
     _lastUsedlocationUpdateType = _locationUpdateType;
@@ -207,6 +195,22 @@ const NSInteger MMPRCLSignalErrorServiceFailure = 2;
         }
     }
     return _defaultLocationManagerDelegateSubject;
+}
+
+- (void)setLocationAuthorizationType:(MMPRCLLocationAuthorizationType)locationAuthorizationType
+{
+    _locationAuthorizationType = locationAuthorizationType;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    if (_locationAuthorizationType == MMPRCLLocationAuthorizationTypeAlways) {
+        if ([_defaultLocationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+            [_defaultLocationManager requestAlwaysAuthorization];
+        }
+    } else if (_locationAuthorizationType == MMPRCLLocationAuthorizationTypeWhenInUse) {
+        if ([_defaultLocationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
+            [_defaultLocationManager requestWhenInUseAuthorization];
+        }
+    }
+#endif
 }
 
 #pragma mark Standard location signals
