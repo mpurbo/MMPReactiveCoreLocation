@@ -118,9 +118,6 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
         _lastKnownLocation = nil;
         _defaultLocationManager = [[CLLocationManager alloc] init];
         _defaultLocationManager.delegate = self;
-        #ifdef __IPHONE_8_0
-        [_defaultLocationManager requestAlwaysAuthorization];
-        #endif
 
         self.signalDelegates = [NSMutableArray array];
     }
