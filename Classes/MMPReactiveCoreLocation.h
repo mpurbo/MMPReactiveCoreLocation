@@ -43,11 +43,26 @@ extern NSString * const MMPRCLSignalErrorDomain;
  */
 extern const NSInteger MMPRCLSignalErrorServiceUnavailable;
 
+/**
+ *  Error code signifying that the location service is unable to get location because of an error. 
+ *  Use key "error" on userInfo to get the actual error.
+ */
+extern const NSInteger MMPRCLSignalErrorServiceFailure;
+
+/**
+ *  Location update type. Whether to use standard location or significant change.
+ */
 enum {
     MMPRCLLocationUpdateTypeStandard,
     MMPRCLLocationUpdateTypeSignificantChange
 };
 typedef NSInteger MMPRCLLocationUpdateType;
+
+enum {
+    MMPRCLLocationAuthorizationTypeAlways,
+    MMPRCLLocationAuthorizationTypeWhenInUse
+};
+typedef NSInteger MMPRCLLocationAuthorizationType;
 
 enum {
     MMPRCLBeaconSignalTypeMonitor,
@@ -165,8 +180,15 @@ typedef NSInteger MMPRCLBeaconEventType;
 
 /**
  *  Whether the CLLocationManager should use standard location update or significant change location update.
+ *  The default value is MMPRCLLocationUpdateTypeStandard.
  */
 @property(assign, nonatomic) MMPRCLLocationUpdateType locationUpdateType;
+
+/**
+ *  Whether the CLLocationManager should request for "Always" or "WhenInUse" authorization. In iOS < 8 this 
+ *  property will not be used. For iOS > 8, the default value is MMPRCLLocationAuthorizationTypeWhenInUse.
+ */
+@property(assign, nonatomic) MMPRCLLocationAuthorizationType locationAuthorizationType;
 
 /**
  *  How old the location should be (to determine whether the location is cached or not). By default it's 5 seconds.
@@ -361,6 +383,29 @@ typedef NSInteger MMPRCLBeaconEventType;
                                                         desiredAccuracy:(CLLocationAccuracy)desiredAccuracy
                                                            activityType:(CLActivityType)activityType
                                                      locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
+                                                       locationAgeLimit:(NSTimeInterval)locationAgeLimit;
+
+/**
+ *  Requests for a signal from a location manager with the specified parameters. The location manager
+ *  emitting location for this signal will be created, started, and stopped automatically by the signal.
+ *
+ *  @param pausesLocationUpdatesAutomatically see CLLocationManager documentation for the meaning of this parameter.
+ *  @param distanceFilter                     see CLLocationManager documentation for the meaning of this parameter.
+ *  @param desiredAccuracy                    see CLLocationManager documentation for the meaning of this parameter.
+ *  @param activityType                       see CLLocationManager documentation for the meaning of this parameter.
+ *  @param locationUpdateType                 Whether the CLLocationManager should use standard location update or significant change location update.
+ *  @param authorizationType                  Whether the CLLocationManager should use "Always" or "WhenInUse" authorization type.
+ *  @param locationAgeLimit                   How old the location should be (to determine whether the location is cached or not). By default it's 5 seconds.
+ *  @param timeout                            Timeout in seconds. Set to 0 for no timeout.
+ *
+ *  @return Location signal producing locations with parameters as specified.
+ */
+- (RACSignal *)autoLocationSignalWithPausesLocationUpdatesAutomatically:(BOOL)pausesLocationUpdatesAutomatically
+                                                         distanceFilter:(CLLocationDistance)distanceFilter
+                                                        desiredAccuracy:(CLLocationAccuracy)desiredAccuracy
+                                                           activityType:(CLActivityType)activityType
+                                                     locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
+                                              locationAuthorizationType:(MMPRCLLocationAuthorizationType)authorizationType
                                                        locationAgeLimit:(NSTimeInterval)locationAgeLimit;
 
 /**---------------------------------------------------------------------------------------

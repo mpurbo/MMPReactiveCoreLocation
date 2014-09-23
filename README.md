@@ -13,6 +13,7 @@ Features:
     - short-lived location managers for one-time location requests; 
     - subscribing to multiple custom location managers with different specifications.
 * Easy to use signals for subscribing to iBeacon monitoring and ranging.
+* Supports iOS 8 "Always" and "WhenInUse" authorization.
 
 ## Installation
 
@@ -96,6 +97,8 @@ Before calling `start` on the singleton instance, you can also configure the loc
     MMPReactiveCoreLocation *rcl = [MMPReactiveCoreLocation instance];
     rcl.desiredAccuracy = kCLLocationAccuracyBest;
     rcl.locationUpdateType = MMPRCLLocationUpdateTypeSignificantChange; // only monitors significant change.
+    // iOS 8 (no effect for iOS < 8)
+    rcl.locationAuthorizationType = MMPRCLLocationAuthorizationTypeAlways;
 
     [rcl start];
     return YES;

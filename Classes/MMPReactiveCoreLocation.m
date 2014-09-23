@@ -34,6 +34,7 @@
 
 NSString * const MMPRCLSignalErrorDomain = @"MMPRCLSignalErrorDomain";
 const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
+const NSInteger MMPRCLSignalErrorServiceFailure = 2;
 
 /**
  *  Delegate for custom location request.
@@ -112,6 +113,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
         _desiredAccuracy = kCLLocationAccuracyBest;
         _activityType = CLActivityTypeOther;
         _locationUpdateType = MMPRCLLocationUpdateTypeStandard;
+        _locationAuthorizationType = MMPRCLLocationAuthorizationTypeWhenInUse;
         _locationAgeLimit = MMPRCL_LOCATION_AGE_LIMIT_DEFAULT;
         _defaultTimeout = MMPRCL_LOCATION_TIMEOUT_DEFAULT;
         
@@ -155,6 +157,18 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
     _defaultLocationManager.distanceFilter = _distanceFilter;
     _defaultLocationManager.desiredAccuracy = _desiredAccuracy;
     _defaultLocationManager.activityType = _activityType;
+    
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    if (_locationAuthorizationType == MMPRCLLocationAuthorizationTypeAlways) {
+        if ([_defaultLocationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+            [_defaultLocationManager requestAlwaysAuthorization];
+        }
+    } else if (_locationAuthorizationType == MMPRCLLocationAuthorizationTypeWhenInUse) {
+        if ([_defaultLocationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
+            [_defaultLocationManager requestWhenInUseAuthorization];
+        }
+    }
+#endif
     
     // not thread-safe, should start/stop be thread safe?
     
@@ -225,6 +239,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                                                           desiredAccuracy:(CLLocationAccuracy)desiredAccuracy
                                                              activityType:(CLActivityType)activityType
                                                        locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
+                                                locationAuthorizationType:(MMPRCLLocationAuthorizationType)authorizationType
                                                          locationAgeLimit:(NSTimeInterval)locationAgeLimit
                                                                   timeout:(NSTimeInterval)timeout
                                                                signalOnce:(BOOL)signalOnce
@@ -247,6 +262,18 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
         locationManager.desiredAccuracy = desiredAccuracy;
         locationManager.activityType = activityType;
         locationManager.delegate = delegate;
+        
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+        if (authorizationType == MMPRCLLocationAuthorizationTypeAlways) {
+            if ([locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+                [locationManager requestAlwaysAuthorization];
+            }
+        } else if (authorizationType == MMPRCLLocationAuthorizationTypeWhenInUse) {
+            if ([locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
+                [locationManager requestWhenInUseAuthorization];
+            }
+        }
+#endif
         
         if (locationUpdateType == MMPRCLLocationUpdateTypeStandard) {
             [locationManager startUpdatingLocation];
@@ -331,6 +358,7 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                                                             desiredAccuracy:desiredAccuracy
                                                                activityType:activityType
                                                          locationUpdateType:locationUpdateType
+                                                  locationAuthorizationType:MMPRCLLocationAuthorizationTypeWhenInUse
                                                            locationAgeLimit:locationAgeLimit
                                                                     timeout:timeout
                                                                  signalOnce:YES];
@@ -366,11 +394,29 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
                                                      locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
                                                        locationAgeLimit:(NSTimeInterval)locationAgeLimit
 {
+    return [self autoLocationSignalWithPausesLocationUpdatesAutomatically:pausesLocationUpdatesAutomatically
+                                                           distanceFilter:distanceFilter
+                                                          desiredAccuracy:desiredAccuracy
+                                                             activityType:activityType
+                                                       locationUpdateType:locationUpdateType
+                                                locationAuthorizationType:(locationUpdateType == MMPRCLLocationUpdateTypeSignificantChange) ? MMPRCLLocationAuthorizationTypeAlways : _locationAuthorizationType // significant change requires "Always"
+                                                         locationAgeLimit:locationAgeLimit];
+}
+
+- (RACSignal *)autoLocationSignalWithPausesLocationUpdatesAutomatically:(BOOL)pausesLocationUpdatesAutomatically
+                                                         distanceFilter:(CLLocationDistance)distanceFilter
+                                                        desiredAccuracy:(CLLocationAccuracy)desiredAccuracy
+                                                           activityType:(CLActivityType)activityType
+                                                     locationUpdateType:(MMPRCLLocationUpdateType)locationUpdateType
+                                              locationAuthorizationType:(MMPRCLLocationAuthorizationType)authorizationType
+                                                       locationAgeLimit:(NSTimeInterval)locationAgeLimit
+{
     return [self customLocationSignalWithPausesLocationUpdatesAutomatically:pausesLocationUpdatesAutomatically
                                                              distanceFilter:distanceFilter
                                                             desiredAccuracy:desiredAccuracy
                                                                activityType:activityType
                                                          locationUpdateType:locationUpdateType
+                                                  locationAuthorizationType:authorizationType
                                                            locationAgeLimit:locationAgeLimit
                                                                     timeout:MMPRCL_LOCATION_TIMEOUT_DEFAULT
                                                                  signalOnce:NO];
@@ -586,8 +632,8 @@ const NSInteger MMPRCLSignalErrorServiceUnavailable = 1;
 {
     if (error.code != kCLErrorLocationUnknown) {
         [_subscriber sendError:[NSError errorWithDomain:MMPRCLSignalErrorDomain
-                                                   code:MMPRCLSignalErrorServiceUnavailable
-                                               userInfo:nil]];
+                                                   code:MMPRCLSignalErrorServiceFailure
+                                               userInfo:@{@"error" : error}]];
     }
 }
 
