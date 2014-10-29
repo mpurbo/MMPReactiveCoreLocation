@@ -1,5 +1,5 @@
 //
-//  MMPReactiveCoreLocation.h
+//  MMPDeferEvent.m
 //
 //  The MIT License (MIT)
 //  Copyright (c) 2014 Mamad Purbo, purbo.org
@@ -23,4 +23,33 @@
 //  THE SOFTWARE.
 //
 
-#import "MMPLocationManager.h"
+#import "MMPDeferEvent.h"
+
+@interface MMPDeferEvent()
+
+@property(assign, nonatomic) CLLocationDistance untilTraveledDistance;
+@property(assign, nonatomic) NSTimeInterval timeout;
+@property(assign, nonatomic) MMPDeferEventType type;
+
+@end
+
+@implementation MMPDeferEvent
+
++ (instancetype)allowDeferredLocationUpdatesUntilTraveled:(CLLocationDistance)distance
+                                                  timeout:(NSTimeInterval)timeout
+{
+    MMPDeferEvent *ret = [MMPDeferEvent new];
+    ret.type = MMPDeferEventTypeAllow;
+    ret.untilTraveledDistance = distance;
+    ret.timeout = timeout;
+    return ret;
+}
+
++ (instancetype)disallowDeferredLocationUpdates
+{
+    MMPDeferEvent *ret = [MMPDeferEvent new];
+    ret.type = MMPDeferEventTypeDisallow;
+    return ret;
+}
+
+@end

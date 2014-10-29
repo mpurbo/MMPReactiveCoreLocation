@@ -1,5 +1,5 @@
 //
-//  MMPReactiveCoreLocation.h
+//  MMPRegionCommandEvent.h
 //
 //  The MIT License (MIT)
 //  Copyright (c) 2014 Mamad Purbo, purbo.org
@@ -23,4 +23,27 @@
 //  THE SOFTWARE.
 //
 
-#import "MMPLocationManager.h"
+#import <Foundation/Foundation.h>
+#import <CoreLocation/CoreLocation.h>
+
+typedef NS_ENUM(NSInteger, MMPRegionCommandEventType) {
+    MMPRegionCommandEventTypeUnknown = 0,
+    MMPRegionCommandEventTypeStartMonitoring,
+    MMPRegionCommandEventTypeStopMonitoring,
+    MMPRegionCommandEventTypeStartRanging,
+    MMPRegionCommandEventTypeStopRanging,
+    MMPRegionCommandEventTypeRequestState
+};
+
+@interface MMPRegionCommandEvent : NSObject
+
+@property(readonly, nonatomic) CLRegion *region;
+@property(readonly, nonatomic) MMPRegionCommandEventType type;
+
++ (instancetype)startMonitoringForRegion:(CLRegion *)region;
++ (instancetype)stopMonitoringForRegion:(CLRegion *)region;
++ (instancetype)startRangingBeaconsInRegion:(CLBeaconRegion *)region;
++ (instancetype)stopRangingBeaconsInRegion:(CLBeaconRegion *)region;
++ (instancetype)requestStateForRegion:(CLRegion *)region;
+
+@end

@@ -31,7 +31,7 @@
 		<string>armv7</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>For testing WhenInUse authorization</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>For testing Always authorization</string>
 	<key>UISupportedInterfaceOrientations</key>

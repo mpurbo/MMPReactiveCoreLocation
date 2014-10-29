@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0B055A59583B492DB23ED081 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C180B19D5DB94D32BEB4AD7E /* libPods.a */; };
-		A9644D4D19543CD800D1451E /* MMPBeaconViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A9644D4C19543CD800D1451E /* MMPBeaconViewController.m */; };
+		A9DE7EEE19E2256C0001E251 /* MMPLocationsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A9DE7EED19E2256C0001E251 /* MMPLocationsViewController.m */; };
 		A9FFD77E190BDF2F00FA10DD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77D190BDF2F00FA10DD /* Foundation.framework */; };
 		A9FFD780190BDF2F00FA10DD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77F190BDF2F00FA10DD /* CoreGraphics.framework */; };
 		A9FFD782190BDF2F00FA10DD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD781190BDF2F00FA10DD /* UIKit.framework */; };
@@ -16,7 +16,6 @@
 		A9FFD78A190BDF2F00FA10DD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A9FFD789190BDF2F00FA10DD /* main.m */; };
 		A9FFD78E190BDF2F00FA10DD /* MMPAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A9FFD78D190BDF2F00FA10DD /* MMPAppDelegate.m */; };
 		A9FFD791190BDF2F00FA10DD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A9FFD78F190BDF2F00FA10DD /* Main.storyboard */; };
-		A9FFD794190BDF2F00FA10DD /* MMPViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A9FFD793190BDF2F00FA10DD /* MMPViewController.m */; };
 		A9FFD796190BDF2F00FA10DD /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A9FFD795190BDF2F00FA10DD /* Images.xcassets */; };
 		A9FFD79D190BDF2F00FA10DD /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD79C190BDF2F00FA10DD /* XCTest.framework */; };
 		A9FFD79E190BDF2F00FA10DD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77D190BDF2F00FA10DD /* Foundation.framework */; };
@@ -36,9 +35,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0FF448008CB04875AE12F7F3 /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
-		A9644D4B19543CD800D1451E /* MMPBeaconViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMPBeaconViewController.h; sourceTree = "<group>"; };
-		A9644D4C19543CD800D1451E /* MMPBeaconViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MMPBeaconViewController.m; sourceTree = "<group>"; };
+		A9DE7EEC19E2256C0001E251 /* MMPLocationsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMPLocationsViewController.h; sourceTree = "<group>"; };
+		A9DE7EED19E2256C0001E251 /* MMPLocationsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MMPLocationsViewController.m; sourceTree = "<group>"; };
 		A9FFD77A190BDF2F00FA10DD /* SimpleReactiveCoreLocation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimpleReactiveCoreLocation.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9FFD77D190BDF2F00FA10DD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		A9FFD77F190BDF2F00FA10DD /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -50,8 +48,6 @@
 		A9FFD78C190BDF2F00FA10DD /* MMPAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMPAppDelegate.h; sourceTree = "<group>"; };
 		A9FFD78D190BDF2F00FA10DD /* MMPAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MMPAppDelegate.m; sourceTree = "<group>"; };
 		A9FFD790190BDF2F00FA10DD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		A9FFD792190BDF2F00FA10DD /* MMPViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMPViewController.h; sourceTree = "<group>"; };
-		A9FFD793190BDF2F00FA10DD /* MMPViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MMPViewController.m; sourceTree = "<group>"; };
 		A9FFD795190BDF2F00FA10DD /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		A9FFD79B190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SimpleReactiveCoreLocationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9FFD79C190BDF2F00FA10DD /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
@@ -59,6 +55,8 @@
 		A9FFD7A6190BDF2F00FA10DD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		A9FFD7A8190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SimpleReactiveCoreLocationTests.m; sourceTree = "<group>"; };
 		C180B19D5DB94D32BEB4AD7E /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		DF46F5F8875968FF5D57FAC0 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
+		EAB12AA92CE2F64772F5FE8C /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,6 +84,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4DBC6E060569D4AEC4424497 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				EAB12AA92CE2F64772F5FE8C /* Pods.debug.xcconfig */,
+				DF46F5F8875968FF5D57FAC0 /* Pods.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
 		A9FFD771190BDF2F00FA10DD = {
 			isa = PBXGroup;
 			children = (
@@ -93,7 +100,7 @@
 				A9FFD7A2190BDF2F00FA10DD /* SimpleReactiveCoreLocationTests */,
 				A9FFD77C190BDF2F00FA10DD /* Frameworks */,
 				A9FFD77B190BDF2F00FA10DD /* Products */,
-				0FF448008CB04875AE12F7F3 /* Pods.xcconfig */,
+				4DBC6E060569D4AEC4424497 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -124,10 +131,8 @@
 				A9FFD78C190BDF2F00FA10DD /* MMPAppDelegate.h */,
 				A9FFD78D190BDF2F00FA10DD /* MMPAppDelegate.m */,
 				A9FFD78F190BDF2F00FA10DD /* Main.storyboard */,
-				A9FFD792190BDF2F00FA10DD /* MMPViewController.h */,
-				A9FFD793190BDF2F00FA10DD /* MMPViewController.m */,
-				A9644D4B19543CD800D1451E /* MMPBeaconViewController.h */,
-				A9644D4C19543CD800D1451E /* MMPBeaconViewController.m */,
+				A9DE7EEC19E2256C0001E251 /* MMPLocationsViewController.h */,
+				A9DE7EED19E2256C0001E251 /* MMPLocationsViewController.m */,
 				A9FFD795190BDF2F00FA10DD /* Images.xcassets */,
 				A9FFD784190BDF2F00FA10DD /* Supporting Files */,
 			);
@@ -271,7 +276,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Pods-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		43D2F34DE7914AB1882C1FCC /* Check Pods Manifest.lock */ = {
@@ -296,10 +301,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A9DE7EEE19E2256C0001E251 /* MMPLocationsViewController.m in Sources */,
 				A9FFD78A190BDF2F00FA10DD /* main.m in Sources */,
-				A9644D4D19543CD800D1451E /* MMPBeaconViewController.m in Sources */,
 				A9FFD78E190BDF2F00FA10DD /* MMPAppDelegate.m in Sources */,
-				A9FFD794190BDF2F00FA10DD /* MMPViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -421,7 +425,7 @@
 		};
 		A9FFD7AD190BDF2F00FA10DD /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0FF448008CB04875AE12F7F3 /* Pods.xcconfig */;
+			baseConfigurationReference = EAB12AA92CE2F64772F5FE8C /* Pods.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
@@ -435,7 +439,7 @@
 		};
 		A9FFD7AE190BDF2F00FA10DD /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0FF448008CB04875AE12F7F3 /* Pods.xcconfig */;
+			baseConfigurationReference = DF46F5F8875968FF5D57FAC0 /* Pods.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
