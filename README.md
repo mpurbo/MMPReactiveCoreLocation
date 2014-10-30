@@ -5,10 +5,10 @@
 
 MMPReactiveCoreLocation is a reactive library for using CoreLocation and iBeacon with ReactiveCocoa. 
 
-**Important Note:**  version 0.5 has been redesigned and rewritten from scratch and is *incompatible* with version 0.4.*. Documentation for version 0.4.* is still available [here](README-0.4.md).
+**Important Note:**  version 0.5 has been redesigned and rewritten from scratch and is *incompatible* with version 0.4.\*. Documentation for version 0.4.\* is still available [here](README-0.4.md).
 
 Features:
-* No more of that pesky delegates, all CLLocationManager's functionalities available as signals.
+* No more of that pesky delegates, all CLLocationManager's functionalities are available as signals.
 * Signals for location-related updates, including one-time location query.
 * Signals for region monitoring updates, including iBeacon monitoring and ranging.
 * Signals for iOS 8 visit monitoring.
