@@ -5,15 +5,16 @@
 
 MMPReactiveCoreLocation is a reactive library for using CoreLocation and iBeacon with ReactiveCocoa. 
 
+**Important Note:**  version 0.5 has been redesigned and rewritten from scratch and is *incompatible* with version 0.4.*. Documentation for version 0.4.* is still available [here](README-0.4.md).
+
 Features:
-* Singleton instance managing CLLocationManager(s). 
-* Easy to use signals for subscribing to location updates.
-* 3 common usage patterns: 
-    - global location manager for app-wide location subscription; 
-    - short-lived location managers for one-time location requests; 
-    - subscribing to multiple custom location managers with different specifications.
-* Easy to use signals for subscribing to iBeacon monitoring and ranging.
+* No more of that pesky delegates, all CLLocationManager's functionalities available as signals.
+* Signals for location-related updates, including one-time location query.
+* Signals for region monitoring updates, including iBeacon monitoring and ranging.
+* Signals for iOS 8 visit monitoring.
+* Signals for location manager status updates and errors.
 * Supports iOS 8 "Always" and "WhenInUse" authorization.
+* CLLocationManager automatically started and stopped when the signal is subscribed or stopped.
 
 ## Installation
 
@@ -24,199 +25,110 @@ it simply add the following line to your Podfile:
 
 ## Usage
 
-### Application-wide Location Subscription
-
-Use the singleton instance anywhere in the application and subscribe to signals provided by the instance:
+The easiest way to subscribe to a location stream with sensible default settings is by calling `locations` method to get the signal:
 ```objectivec
-// get the singleton instance
-MMPReactiveCoreLocation *rcl = [MMPReactiveCoreLocation instance];
+// import the header
+#import <MMPReactiveCoreLocation/MMPReactiveCoreLocation.h>
 
-// subscribe to location updates
-[[rcl locationSignal] subscribeNext:^(CLLocation *location) {
-    NSLog(@"next location updated: (%f, %f, %f)",
-          location.coordinate.latitude,
-          location.coordinate.longitude,
-          location.horizontalAccuracy);
+// create MMPLocationManager, subscribe to 'locations' signal
+[[[MMPLocationManager new] locations] subscribeNext:^(CLLocation *location) {
+    NSLog(@"[INFO] received location: %@", location);
 }];
 ```
-You can also subscribe to location updates filtered with accuracy and optional timeout:
+
+If you don't need a constant stream of location updates, you can use `location` (note the lack of plural `s`) to get the latest location once and the library will automatically stop CLLocationManager and cleanup resources:
 ```objectivec
-// give me only locations when the GPS is accurate within 100m!
-[[rcl locationSignalWithAccuracy:100.0] subscribeNext:^(CLLocation *location) {
-    NSLog(@"accurate location: (%f, %f, %f)",
-          location.coordinate.latitude,
-          location.coordinate.longitude,
-          location.horizontalAccuracy);
+// one-time location
+[[[MMPLocationManager new] location] subscribeNext:^(CLLocation *location) {
+    NSLog(@"[INFO] received location: %@", location);
 }];
-
-// try to get GPS location that is accurate within 100m, but give up after 15 seconds 
-[[rcl locationSignalWithAccuracy:100.0 timeout:15.0]
-      subscribeNext:^(CLLocation *location) {
-          NSLog(@"Accurate location: (%f, %f, %f)",
-                location.coordinate.latitude,
-                location.coordinate.longitude,
-                location.horizontalAccuracy);
-      }
-      error:^(NSError *error) {
-          if ([error.domain isEqualToString:RACSignalErrorDomain] && error.code == RACSignalErrorTimedOut) {
-              NSLog(@"It's been 15 seconds but I still haven't received accurate location.");
-          }
-      }];
 ```
-In order to get the location stream started, you need to call `start`. To stop the stream, call `stop`. For example, to make the stream available
-throughout the application but cancelled whenever the application is in background or stopped, do something like:
+
+For significant change updates, use `significantLocationChanges` signal instead:
 ```objectivec
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
-{
-    [[MMPReactiveCoreLocation instance] start];    
-    return YES;
-}
+// import the header
+#import <MMPReactiveCoreLocation/MMPReactiveCoreLocation.h>
 
-- (void)applicationDidEnterBackground:(UIApplication *)application
-{
-    [[MMPReactiveCoreLocation instance] stop];
-}
-
-- (void)applicationWillEnterForeground:(UIApplication *)application
-{
-    [[MMPReactiveCoreLocation instance] start];
-}
-
-- (void)applicationWillTerminate:(UIApplication *)application
-{
-    [[MMPReactiveCoreLocation instance] stop];
-}
+// create MMPLocationManager, subscribe to 'locations' signal
+[[[MMPLocationManager new] locations] subscribeNext:^(CLLocation *location) {
+    NSLog(@"[INFO] received location: %@", location);
+}];
 ```
 
-### Application-wide Location Manager Configuration
+Default settings for the location signals are:
+- Automatically pauses for location updates. See [here](https://developer.apple.com/library/ios/documentation/CoreLocation/Reference/CLLocationManager_Class/#//apple_ref/occ/instp/CLLocationManager/pausesLocationUpdatesAutomatically).
+- Distance filter is [kCLDistanceFilterNone](https://developer.apple.com/LIBRARY/IOS/documentation/CoreLocation/Reference/CoreLocationConstantsRef/index.html#//apple_ref/doc/constant_group/Distance_Filter_Value). 
+- Desired accuracy is [kCLLocationAccuracyBest](https://developer.apple.com/library/mac/documentation/CoreLocation/Reference/CoreLocationConstantsRef/index.html#//apple_ref/c/data/kCLLocationAccuracyBest).
+- Activity type is [CLActivityTypeOther](https://developer.apple.com/library/ios/Documentation/CoreLocation/Reference/CLLocationManager_Class/index.html#//apple_ref/c/tdef/CLActivityType).
+- On iOS 8, authorization type is "WhenInUse" for `locations` and "Always" for `significantLocationChanges`.
 
-Before calling `start` on the singleton instance, you can also configure the location manager by setting the instance's properties:
+### Setting Location Manager
+
+If you need other than default settings, then you chain-call following methods to set values that you want to customize:
+- `distanceFilter` for setting distance filter.
+- `desiredAccuracy` for setting desired accuracy.
+- `activityType` for setting activity type.
+- `pauseLocationUpdatesAutomatically` or `pauseLocationUpdatesManually` to set auto or manual update of location pauses.
+
+Here's a sample code on how to customize location manager settings before subscribing to a signal:
 ```objectivec
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
-{
-    MMPReactiveCoreLocation *rcl = [MMPReactiveCoreLocation instance];
-    rcl.desiredAccuracy = kCLLocationAccuracyBest;
-    rcl.locationUpdateType = MMPRCLLocationUpdateTypeSignificantChange; // only monitors significant change.
-    // iOS 8 (no effect for iOS < 8)
-    rcl.locationAuthorizationType = MMPRCLLocationAuthorizationTypeAlways;
+MMPLocationManager *service = [MMPLocationManager new];
 
-    [rcl start];
-    return YES;
-}
+RACSignal *locations = [[[[service distanceFilter:kCLDistanceFilterNone]
+                                   desiredAccuracy:kCLLocationAccuracyBestForNavigation]
+                                   activityType:CLActivityTypeFitness]
+                                   locations];
 ```
-See the [class reference](http://cocoadocs.org/docsets/MMPReactiveCoreLocation) for detailed information on these configurations.
 
-### One-time Location Requests
+Please see the header file for more setting possibilities.
 
-Application-wide location subscription is usually only suitable for GPS-heavy location tracking applications. For most of other type of applications, occasional one-time location requests is usually sufficient and it's much less taxing on the battery. Use `single*` methods to request for such location as shown in the following example:
+### Handling Errors and Status Changes
 
 ```objectivec
-// give me one-time location.
-[[rcl singleLocationSignalWithAccuracy:100.0 timeout:15.0]
-      subscribeNext:^(CLLocation *location) {
-          NSLog(@"next location updated: (%f, %f, %f)", 
-                  location.coordinate.latitude, 
-                  location.coordinate.longitude, 
-                  location.horizontalAccuracy);
-      }
-      error:^(NSError *error) {
-          if ([error.domain isEqualToString:RACSignalErrorDomain] && error.code == RACSignalErrorTimedOut) {
-              NSLog(@"It's been 15 seconds but I still haven't received accurate location.");
-          }
-      }];
+        // handling authorization status change
+        [[service authorizationStatus] subscribeNext:^(NSNumber *statusNumber) {
+            CLAuthorizationStatus status = [statusNumber intValue];
+            switch (status) {
+                case kCLAuthorizationStatusNotDetermined:
+                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusNotDetermined");
+                    break;
+                case kCLAuthorizationStatusRestricted:
+                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusRestricted");
+                    break;
+                case kCLAuthorizationStatusDenied:
+                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusDenied");
+                    break;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+                case kCLAuthorizationStatusAuthorizedAlways:
+                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedAlways");
+                    break;
+                case kCLAuthorizationStatusAuthorizedWhenInUse:
+                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedWhenInUse");
+                    break;
+#else
+                case kCLAuthorizationStatusAuthorized:
+                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorized");
+                    break;
+#endif
+                default:
+                    break;
+            }
+        }];
+        
+        // handling errors
+        [[service errors] subscribeNext:^(NSError *error) {
+            NSLog(@"[ERROR] Location service error: %@", error);
+        }];
 ```
-
-For this kind of one-time location request, the `MMPReactiveCoreLocation` instance will create a short-lived location manager, start and stop it automatically so you don't need to call `start` and `stop` manually.
-
-### Multiple Location Managers
-
-If you need to subscribe to signals with different location manager specifications/parameters, then you can use `auto*` methods as shown in the following example:
-
-```objectivec
-// let's do one standard update with best accuracy
-[[[MMPReactiveCoreLocation instance]
-   autoLocationSignalWithLocationUpdateType:MMPRCLLocationUpdateTypeStandard]
-   subscribeNext:^(CLLocation *location) {
-       NSLog(@"Auto signal 1 location updated: (%f, %f, %f)", location.coordinate.latitude, location.coordinate.longitude, location.horizontalAccuracy);
-   }
-   error:^(NSError *error) {
-       NSLog(@"Ouch! Auto signal 1 error: %@", error);
-   }
-   completed:^{
-       NSLog(@"Auto signal 1 completed");
-   }];
-
-// then have another one with significant change and 100.0 m accuracy 
-[[[MMPReactiveCoreLocation instance]
-   autoLocationSignalWithAccuracy:100.0 locationUpdateType:MMPRCLLocationUpdateTypeSignificantChange]
-   subscribeNext:^(CLLocation *location) {
-       NSLog(@"Auto signal 2 location updated: (%f, %f, %f)", location.coordinate.latitude, location.coordinate.longitude, location.horizontalAccuracy);
-   }
-   error:^(NSError *error) {
-       NSLog(@"Ouch! Auto signal 2 error: %@", error);
-   }
-   completed:^{
-       NSLog(@"Auto signal 2 completed");
-   }];
-```
-
-For both of these signals, the `MMPReactiveCoreLocation` instance will create a special location manager, start and stop it automatically so you don't need to call `start` and `stop` manually.
-
-### iBeacon Signals
-
-iBeacon related signals are available from `beacon*` methods. These signals emit beacon event object `MMPRCLBeaconEvent` with a property called `eventType` that can be used to determine the type of event produced by the signal. Following sample code shows how to monitor and range an iBeacon:
-
-```objectivec
-[[[MMPReactiveCoreLocation instance]
-   beaconMonitorWithProximityUUID:[[NSUUID alloc] initWithUUIDString:@"E2C56DB5-DFFB-48D2-B060-D0F5A71096E0"] identifier:@"com.example.apple-samplecode.AirLocate"]
-   subscribeNext:^(MMPRCLBeaconEvent *event) {
-       if (event.eventType == MMPRCLBeaconEventTypeRegionStateUpdated) {
-           // region state is updated
-           if (event.regionState == CLRegionStateInside) {
-               // entering the beacon region
-               CLBeaconRegion *beaconRegion = (CLBeaconRegion *)event.region;
-               NSLog(@"Entering beacon region: %@, now ranging...", beaconRegion.identifier);
-               
-               // start ranging the beacon
-               [[[MMPReactiveCoreLocation instance]
-                  beaconRangeWithProximityUUID:beaconRegion.proximityUUID identifier:beaconRegion.identifier]
-                  subscribeNext:^(MMPRCLBeaconEvent *rangingEvent) {
-                      NSLog(@"There are %ld beacons ranged", [rangingEvent.rangedBeacons count]);
-                      for (CLBeacon *beacon in rangingEvent.rangedBeacons) {
-                          NSString *proximity = @"Unknown";
-                          if (beacon.proximity == CLProximityFar) {
-                              proximity = @"Far";
-                          } else if (beacon.proximity == CLProximityNear) {
-                              proximity = @"Near";
-                          } else if (beacon.proximity == CLProximityImmediate) {
-                              proximity = @"Immediate";
-                          }
-                          NSLog(@"Beacon UUID: %@, proximity: %@", beacon.proximityUUID, proximity);
-                      }
-                  }];
-               
-           } else if (event.regionState == CLRegionStateOutside) {
-               // leaving the beacon region
-           }
-       }
-   }];
-```
-
-Each of the signals will allocate it's own location manager and it will automatically destroyed when the signal is completed. 
-
-Please check out the sample code for some more subtleties that you may need to be aware of.
 
 ## Roadmap
 
-Please note that this library has not been extensively tested so there's bound to be bugs but I'm planning to use this in real world projects so it should be actively maintained. Contributions are welcomed.
+Most of the CLLocationManager functionalities including iBeacon, region monitoring, visit monitoring, etc. has been implemented *but* has not been extensively tested so there's bound to be bugs. I'm planning to use this in real world projects so it should be actively maintained. Contributions are welcomed.
 
-* 0.5: Region monitoring.
-* 0.6: All other remaining CoreLocation functions.
-* 0.7: Unit tests.
+I will write more usage samples and documentation as I fix bugs and write tests. In the meantime, if you have any question on how to apply certain CLLocationManager usage pattern using this library, please free to contact me or open issues.
 
-## Documentation
-
-Class reference is available here: [![Version](http://cocoapod-badges.herokuapp.com/v/MMPReactiveCoreLocation/badge.png)](http://cocoadocs.org/docsets/MMPReactiveCoreLocation)
+* 0.6: Core Bluetooth integration for iBeacon publishing.
+* 0.7: Unit tests and documentations.
 
 ## Contact
 

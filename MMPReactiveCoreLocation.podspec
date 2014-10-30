@@ -6,11 +6,12 @@ Pod::Spec.new do |s|
                        MMPReactiveCoreLocation is a reactive library for using CoreLocation and iBeacon with ReactiveCocoa. 
 
                        Features:
-                       * Singleton instance managing CLLocationManager(s). 
-                       * Easy to use signals for subscribing to location updates.
-                       * 3 common usage patterns: global location manager for app-wide location subscription; short-lived location managers for one-time location requests; subscribing to multiple custom location managers with different specifications.
-                       * Easy to use signals for subscribing to iBeacon monitoring and ranging.
+                       * Signals for location-related updates.
+                       * Signals for region monitoring updates, including iBeacon monitoring and ranging.
+                       * Signals for iOS 8 visit monitoring.
+                       * Signals for location manager status updates and errors.
                        * Supports iOS 8 "Always" and "WhenInUse" authorization.
+                       * CLLocationManager automatically started and stopped when the signal is subscribed or stopped.
                        DESC
   s.homepage         = "https://github.com/mpurbo/MMPReactiveCoreLocation"
   s.license          = 'MIT'

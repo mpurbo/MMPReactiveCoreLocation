@@ -1,17 +1,17 @@
 # MMPReactiveCoreLocation CHANGELOG
 
-## 0.1.0
+## 0.5.0
 
-Initial release.
+* Complete library design overhaul, implementing all CLLocationManager (up to iOS 8) functionalities. **Incompatible** with previous versions.
 
-## 0.1.1
+## 0.4.1
 
-* More robust location updating logic.
-* Signals with accuracy and timeout.
+* Support for iOS 8 "Always" and "WhenInUse" authorization.
 
-## 0.2.0
+## 0.4.0
 
-* Signals for one-time location request.
+* iBeacon signals.
+* Updated usage examples.
 
 ## 0.3.0
 
@@ -19,11 +19,15 @@ Initial release.
 * Custom location manager signals.
 * Updated usage examples.
 
-## 0.4.0
+## 0.2.0
 
-* iBeacon signals.
-* Updated usage examples.
+* Signals for one-time location request.
 
-## 0.4.1
+## 0.1.1
 
-* Support for iOS 8 "Always" and "WhenInUse" authorization.
+* More robust location updating logic.
+* Signals with accuracy and timeout.
+
+## 0.1.0
+
+Initial release.
