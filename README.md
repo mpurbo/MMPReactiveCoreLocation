@@ -46,11 +46,8 @@ If you don't need a constant stream of location updates, you can use `location` 
 
 For significant change updates, use `significantLocationChanges` signal instead:
 ```objectivec
-// import the header
-#import <MMPReactiveCoreLocation/MMPReactiveCoreLocation.h>
-
-// create MMPLocationManager, subscribe to 'locations' signal
-[[[MMPLocationManager new] locations] subscribeNext:^(CLLocation *location) {
+// create MMPLocationManager, subscribe to 'significantLocationChanges' signal
+[[[MMPLocationManager new] significantLocationChanges] subscribeNext:^(CLLocation *location) {
     NSLog(@"[INFO] received location: %@", location);
 }];
 ```
@@ -85,47 +82,47 @@ Please see the header file for more setting possibilities.
 ### Handling Errors and Status Changes
 
 ```objectivec
-        // handling authorization status change
-        [[service authorizationStatus] subscribeNext:^(NSNumber *statusNumber) {
-            CLAuthorizationStatus status = [statusNumber intValue];
-            switch (status) {
-                case kCLAuthorizationStatusNotDetermined:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusNotDetermined");
-                    break;
-                case kCLAuthorizationStatusRestricted:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusRestricted");
-                    break;
-                case kCLAuthorizationStatusDenied:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusDenied");
-                    break;
+// handling authorization status change
+[[service authorizationStatus] subscribeNext:^(NSNumber *statusNumber) {
+    CLAuthorizationStatus status = [statusNumber intValue];
+    switch (status) {
+        case kCLAuthorizationStatusNotDetermined:
+            NSLog(@"[INFO] Status changed: kCLAuthorizationStatusNotDetermined");
+            break;
+        case kCLAuthorizationStatusRestricted:
+            NSLog(@"[INFO] Status changed: kCLAuthorizationStatusRestricted");
+            break;
+        case kCLAuthorizationStatusDenied:
+            NSLog(@"[INFO] Status changed: kCLAuthorizationStatusDenied");
+            break;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-                case kCLAuthorizationStatusAuthorizedAlways:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedAlways");
-                    break;
-                case kCLAuthorizationStatusAuthorizedWhenInUse:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedWhenInUse");
-                    break;
+        case kCLAuthorizationStatusAuthorizedAlways:
+            NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedAlways");
+            break;
+        case kCLAuthorizationStatusAuthorizedWhenInUse:
+            NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedWhenInUse");
+            break;
 #else
-                case kCLAuthorizationStatusAuthorized:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorized");
-                    break;
+        case kCLAuthorizationStatusAuthorized:
+            NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorized");
+            break;
 #endif
-                default:
-                    break;
-            }
-        }];
-        
-        // handling errors
-        [[service errors] subscribeNext:^(NSError *error) {
-            NSLog(@"[ERROR] Location service error: %@", error);
-        }];
+        default:
+            break;
+    }
+}];
+
+// handling errors
+[[service errors] subscribeNext:^(NSError *error) {
+    NSLog(@"[ERROR] Location service error: %@", error);
+}];
 ```
 
 ## Roadmap
 
 Most of the CLLocationManager functionalities including iBeacon, region monitoring, visit monitoring, etc. has been implemented *but* has not been extensively tested so there's bound to be bugs. I'm planning to use this in real world projects so it should be actively maintained. Contributions are welcomed.
 
-I will write more usage samples and documentation as I fix bugs and write tests. In the meantime, if you have any question on how to apply certain CLLocationManager usage pattern using this library, please free to contact me or open issues.
+I will write more usage samples and documentation as I fix bugs and write tests. In the meantime, if you have any question on how to apply certain CLLocationManager usage pattern using this library, please feel free to contact me or open issues.
 
 * 0.6: Core Bluetooth integration for iBeacon publishing.
 * 0.7: Unit tests and documentations.
