@@ -665,6 +665,18 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
     return _headingSignal;
 }
 
+- (RACSignal *)requestAuthorization
+{
+    if (!self.locationManager) {
+        self.locationManager = [CLLocationManager new];
+        self.locationManager.delegate = self;
+        self.authorizationStatusSubject = [RACSubject subject];
+        self.errorSubject = [RACSubject subject];
+    }
+    [self _authorize:self.locationManager with:self.authorizationType];
+    return [self authorizationStatus];
+}
+
 #endif
 
 - (RACSignal *)authorizationStatus

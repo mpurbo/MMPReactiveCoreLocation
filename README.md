@@ -118,13 +118,49 @@ Please see the header file for more setting possibilities.
 }];
 ```
 
+### Manual Authorization Request
+
+When you need to send request for authorization manually, for example when using `MKMapView` and you just need to send the request before setting `showsUserLocation`, you can use `requestAuthorization` method that returns a signal producing status change events (same as `authorizationStatus` signal):
+```objectivec
+// you need to have a strong reference to the manager, otherwise the manager
+// will be disposed before you receive authorization.
+@property (nonatomic, strong) MMPLocationManager *locationManagerForAuth;
+
+// .... 
+
+self.locationManagerForAuth = [MMPLocationManager new];
+
+[[[self.locationManagerForAuth
+   authorizeAlways]
+   requestAuthorization]
+   subscribeNext:^(NSNumber *statusNumber) {
+       @strongify(self)
+       
+       CLAuthorizationStatus status = [statusNumber intValue];
+       switch (status) {
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+           case kCLAuthorizationStatusAuthorizedAlways:
+           case kCLAuthorizationStatusAuthorizedWhenInUse:
+               _mapView.showsUserLocation = YES;
+               break;
+#else
+           case kCLAuthorizationStatusAuthorized:
+               _mapView.showsUserLocation = YES;
+               break;
+#endif
+           default:
+               break;
+       }
+   }];
+```
+
 ## Roadmap
 
 Most of the CLLocationManager functionalities including iBeacon, region monitoring, visit monitoring, etc. has been implemented *but* has not been extensively tested so there's bound to be bugs. I'm planning to use this in real world projects so it should be actively maintained. Contributions are welcomed.
 
 I will write more usage samples and documentation as I fix bugs and write tests. In the meantime, if you have any question on how to apply certain CLLocationManager usage pattern using this library, please feel free to contact me or open issues.
 
-* 0.6: Core Bluetooth integration for iBeacon publishing.
+* 0.6: CoreBluetooth integration for iBeacon publishing.
 * 0.7: Unit tests and documentations.
 
 ## Contact

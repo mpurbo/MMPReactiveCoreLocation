@@ -138,11 +138,33 @@
                                     <action selector="singleLocationButtonTouchUpInside:" destination="rFp-N6-5nk" eventType="touchUpInside" id="dOM-Sx-jfH"/>
                                 </connections>
                             </button>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Authorization status signal" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Z1D-vN-ljM">
+                                <rect key="frame" x="20" y="404" width="280" height="21"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="status" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jyy-r3-X7f">
+                                <rect key="frame" x="20" y="429" width="280" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1s2-7J-2Cr">
+                                <rect key="frame" x="20" y="458" width="280" height="30"/>
+                                <state key="normal" title="Request for authorization">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="requestForAuthTouchUpInside:" destination="rFp-N6-5nk" eventType="touchUpInside" id="sye-9N-TQJ"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
                     <tabBarItem key="tabBarItem" title="Location Signals" id="hua-mX-cWZ"/>
                     <connections>
+                        <outlet property="authorizationStatusLabel" destination="jyy-r3-X7f" id="c49-Q8-ODY"/>
                         <outlet property="locationButton" destination="eny-qk-TMP" id="ivr-25-pX8"/>
                         <outlet property="locationLabel" destination="pFE-m5-L7f" id="6CO-Bu-UnH"/>
                         <outlet property="significantLocationButton" destination="KYx-fJ-QVj" id="oKs-ub-ksj"/>

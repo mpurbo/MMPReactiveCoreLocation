@@ -13,6 +13,8 @@
 
 @interface MMPLocationsViewController ()
 
+@property (nonatomic, strong) MMPLocationManager *locationManagerForAuth;
+
 @property (nonatomic, strong) RACSubject *doneSubject;
 @property (nonatomic, strong) RACSubject *significantDoneSubject;
 
@@ -200,6 +202,47 @@
         [_significantLocationButton setTitle:@"Start significant location change signal" forState:UIControlStateNormal];
     }
     
+}
+
+- (IBAction)requestForAuthTouchUpInside:(id)sender {
+    
+    @weakify(self)
+    
+    self.locationManagerForAuth = [MMPLocationManager new];
+    
+    [[[self.locationManagerForAuth
+       authorizeAlways]
+       requestAuthorization]
+       subscribeNext:^(NSNumber *statusNumber) {
+           @strongify(self)
+           
+           CLAuthorizationStatus status = [statusNumber intValue];
+           switch (status) {
+               case kCLAuthorizationStatusNotDetermined:
+                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusNotDetermined";
+                   break;
+               case kCLAuthorizationStatusRestricted:
+                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusRestricted";
+                   break;
+               case kCLAuthorizationStatusDenied:
+                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusDenied";
+                   break;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+               case kCLAuthorizationStatusAuthorizedAlways:
+                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusAuthorizedAlways";
+                   break;
+               case kCLAuthorizationStatusAuthorizedWhenInUse:
+                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusAuthorizedWhenInUse";
+                   break;
+#else
+               case kCLAuthorizationStatusAuthorized:
+                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusAuthorized";
+                   break;
+#endif
+               default:
+                   break;
+           }
+       }];
 }
 
 @end

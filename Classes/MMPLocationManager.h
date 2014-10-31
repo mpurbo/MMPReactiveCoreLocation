@@ -97,6 +97,7 @@ typedef NS_ENUM(NSInteger, MMPLocationEventType) {
 
 - (instancetype)authorizeAlways;
 - (instancetype)authorizeWhenInUse;
+- (RACSignal *)requestAuthorization;
 
 #endif
 

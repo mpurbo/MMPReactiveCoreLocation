@@ -15,9 +15,11 @@
 @property (strong, nonatomic) IBOutlet UILabel *singleLocationLabel;
 @property (strong, nonatomic) IBOutlet UILabel *significantLocationLabel;
 @property (strong, nonatomic) IBOutlet UIButton *significantLocationButton;
+@property (strong, nonatomic) IBOutlet UILabel *authorizationStatusLabel;
 
 - (IBAction)locationButtonTouchUpInside:(id)sender;
 - (IBAction)singleLocationButtonTouchUpInside:(id)sender;
 - (IBAction)significantLocationButtonTouchUpInside:(id)sender;
+- (IBAction)requestForAuthTouchUpInside:(id)sender;
 
 @end
