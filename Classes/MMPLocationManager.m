@@ -271,6 +271,19 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
     _authorizationType = MMPLocationAuthorizationTypeWhenInUse;
     return self;
 }
+
+- (void)_authorize:(CLLocationManager *)locationManager with:(MMPLocationAuthorizationType)authorizationType
+{
+    if (authorizationType == MMPLocationAuthorizationTypeAlways) {
+        if ([locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+            [locationManager requestAlwaysAuthorization];
+        }
+    } else if (authorizationType == MMPLocationAuthorizationTypeWhenInUse) {
+        if ([locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
+            [locationManager requestWhenInUseAuthorization];
+        }
+    }
+}
 #endif
 
 #pragma mark - Signals implementation
@@ -324,15 +337,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                 self.locationManager.activityType = self.activityType;
                 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-                if (self.authorizationType == MMPLocationAuthorizationTypeAlways) {
-                    if ([self.locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
-                        [self.locationManager requestAlwaysAuthorization];
-                    }
-                } else if (self.authorizationType == MMPLocationAuthorizationTypeWhenInUse) {
-                    if ([self.locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
-                        [self.locationManager requestWhenInUseAuthorization];
-                    }
-                }
+                [self _authorize:self.locationManager with:self.authorizationType];
 #endif
                 
                 if (locationUpdateType == MMPLocationUpdateTypeStandard) {
@@ -468,6 +473,10 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                 self.locationManager.headingFilter = self.headingFilter;
                 self.locationManager.headingOrientation = self.headingOrientation;
                 
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+                [self _authorize:self.locationManager with:self.authorizationType];
+#endif
+                
                 [self.locationManager startUpdatingHeading];
                 
                 MMPRxCL_LOG(@"[INFO] Location manager started heading update");
@@ -534,6 +543,10 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                                                           userInfo:nil]];
                     return nil;
                 }
+                
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+                [self _authorize:self.locationManager with:self.authorizationType];
+#endif
                 
                 [self.regionCommandSignal
                       subscribeNext:^(MMPRegionCommandEvent *ev) {
@@ -611,6 +624,10 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                                                           userInfo:nil]];
                     return nil;
                 }
+                
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+                [self _authorize:self.locationManager with:self.authorizationType];
+#endif
                 
                 [self.locationManager startMonitoringVisits];
                 
