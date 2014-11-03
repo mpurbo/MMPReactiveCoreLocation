@@ -7,7 +7,6 @@
 //
 
 #import "MMPLocationsViewController.h"
-#import <ReactiveCocoa/RACEXTScope.h>
 #import <MMPReactiveCoreLocation/MMPReactiveCoreLocation.h>
 #import <CoreLocation/CoreLocation.h>
 
@@ -40,14 +39,10 @@
         
         MMPLocationManager *service = [MMPLocationManager new];
         
-        @weakify(self)
-        
         [[[[service stop:_doneSubject]
                     locations]
                     subscribeOn:[RACScheduler mainThreadScheduler]]
                     subscribeNext:^(CLLocation *location) {
-                        
-                        @strongify(self)
                         
                         NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
                                                location.coordinate.latitude,
@@ -58,10 +53,7 @@
                         
                     }
                     completed:^{
-                        
-                        @strongify(self)
                         self.doneSubject = nil;
-                        
                     }];
         
         [[service authorizationStatus] subscribeNext:^(NSNumber *statusNumber) {
@@ -110,13 +102,9 @@
     
     MMPLocationManager *service = [MMPLocationManager new];
     
-    @weakify(self)
-    
     [[[service location]
                subscribeOn:[RACScheduler mainThreadScheduler]]
                subscribeNext:^(CLLocation *location) {
-                   
-                   @strongify(self)
                    
                    NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
                                           location.coordinate.latitude,
@@ -137,14 +125,10 @@
         
         MMPLocationManager *service = [MMPLocationManager new];
         
-        @weakify(self)
-        
         [[[[service stop:_significantDoneSubject]
                     significantLocationChanges]
                     subscribeOn:[RACScheduler mainThreadScheduler]]
                     subscribeNext:^(CLLocation *location) {
-                        
-                        @strongify(self)
                         
                         NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
                                                location.coordinate.latitude,
@@ -155,10 +139,7 @@
                         
                     }
                     completed:^{
-                        
-                        @strongify(self)
                         self.significantDoneSubject = nil;
-                        
                     }];
         
         [[service authorizationStatus] subscribeNext:^(NSNumber *statusNumber) {
@@ -206,16 +187,12 @@
 
 - (IBAction)requestForAuthTouchUpInside:(id)sender {
     
-    @weakify(self)
-    
     self.locationManagerForAuth = [MMPLocationManager new];
     
     [[[self.locationManagerForAuth
        authorizeAlways]
        requestAuthorization]
        subscribeNext:^(NSNumber *statusNumber) {
-           @strongify(self)
-           
            CLAuthorizationStatus status = [statusNumber intValue];
            switch (status) {
                case kCLAuthorizationStatusNotDetermined:

@@ -133,9 +133,7 @@ self.locationManagerForAuth = [MMPLocationManager new];
 [[[self.locationManagerForAuth
    authorizeAlways]
    requestAuthorization]
-   subscribeNext:^(NSNumber *statusNumber) {
-       @strongify(self)
-       
+   subscribeNext:^(NSNumber *statusNumber) {      
        CLAuthorizationStatus status = [statusNumber intValue];
        switch (status) {
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
