@@ -26,7 +26,7 @@ it simply add the following line to your Podfile:
 ## Usage
 
 The easiest way to subscribe to a location stream with sensible default settings is by calling `locations` method to get the signal:
-```objectivec
+```objc
 // import the header
 #import <MMPReactiveCoreLocation/MMPReactiveCoreLocation.h>
 
@@ -37,7 +37,7 @@ The easiest way to subscribe to a location stream with sensible default settings
 ```
 
 If you don't need a constant stream of location updates, you can use `location` (note the lack of plural `s`) to get the latest location once and the library will automatically stop CLLocationManager and cleanup resources:
-```objectivec
+```objc
 // one-time location
 [[[MMPLocationManager new] location] subscribeNext:^(CLLocation *location) {
     NSLog(@"[INFO] received location: %@", location);
@@ -45,7 +45,7 @@ If you don't need a constant stream of location updates, you can use `location` 
 ```
 
 For significant change updates, use `significantLocationChanges` signal instead:
-```objectivec
+```objc
 // create MMPLocationManager, subscribe to 'significantLocationChanges' signal
 [[[MMPLocationManager new] significantLocationChanges] subscribeNext:^(CLLocation *location) {
     NSLog(@"[INFO] received location: %@", location);
@@ -68,7 +68,7 @@ If you need other than default settings, then you chain-call following methods t
 - `pauseLocationUpdatesAutomatically` or `pauseLocationUpdatesManually` to set auto or manual update of location pauses.
 
 Here's a sample code on how to customize location manager settings before subscribing to a signal:
-```objectivec
+```objc
 MMPLocationManager *service = [MMPLocationManager new];
 
 RACSignal *locations = [[[[service distanceFilter:kCLDistanceFilterNone]
@@ -81,7 +81,7 @@ Please see the header file for more setting possibilities.
 
 ### Handling Errors and Status Changes
 
-```objectivec
+```objc
 // handling authorization status change
 [[service authorizationStatus] subscribeNext:^(NSNumber *statusNumber) {
     CLAuthorizationStatus status = [statusNumber intValue];
@@ -121,7 +121,7 @@ Please see the header file for more setting possibilities.
 ### Manual Authorization Request
 
 When you need to send request for authorization manually, for example when using `MKMapView` and you just need to send the request before setting `showsUserLocation`, you can use `requestAuthorization` method that returns a signal producing status change events (same as `authorizationStatus` signal):
-```objectivec
+```objc
 // you need to have a strong reference to the manager, otherwise the manager
 // will be disposed before you receive authorization.
 @property (nonatomic, strong) MMPLocationManager *locationManagerForAuth;
