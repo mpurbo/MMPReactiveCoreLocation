@@ -8,7 +8,6 @@
 
 #import "MMPLocationsViewController.h"
 #import <MMPReactiveCoreLocation/MMPReactiveCoreLocation.h>
-#import <CoreLocation/CoreLocation.h>
 
 @interface MMPLocationsViewController ()
 

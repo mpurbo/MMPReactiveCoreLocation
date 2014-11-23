@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0B055A59583B492DB23ED081 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C180B19D5DB94D32BEB4AD7E /* libPods.a */; };
+		A97202F11A07B9E1008C27D3 /* MMPRegionsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A97202F01A07B9E1008C27D3 /* MMPRegionsViewController.m */; };
 		A9DE7EEE19E2256C0001E251 /* MMPLocationsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A9DE7EED19E2256C0001E251 /* MMPLocationsViewController.m */; };
 		A9FFD77E190BDF2F00FA10DD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77D190BDF2F00FA10DD /* Foundation.framework */; };
 		A9FFD780190BDF2F00FA10DD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77F190BDF2F00FA10DD /* CoreGraphics.framework */; };
@@ -35,6 +36,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A97202EF1A07B9E1008C27D3 /* MMPRegionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMPRegionsViewController.h; sourceTree = "<group>"; };
+		A97202F01A07B9E1008C27D3 /* MMPRegionsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MMPRegionsViewController.m; sourceTree = "<group>"; };
 		A9DE7EEC19E2256C0001E251 /* MMPLocationsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMPLocationsViewController.h; sourceTree = "<group>"; };
 		A9DE7EED19E2256C0001E251 /* MMPLocationsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MMPLocationsViewController.m; sourceTree = "<group>"; };
 		A9FFD77A190BDF2F00FA10DD /* SimpleReactiveCoreLocation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimpleReactiveCoreLocation.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -133,6 +136,8 @@
 				A9FFD78F190BDF2F00FA10DD /* Main.storyboard */,
 				A9DE7EEC19E2256C0001E251 /* MMPLocationsViewController.h */,
 				A9DE7EED19E2256C0001E251 /* MMPLocationsViewController.m */,
+				A97202EF1A07B9E1008C27D3 /* MMPRegionsViewController.h */,
+				A97202F01A07B9E1008C27D3 /* MMPRegionsViewController.m */,
 				A9FFD795190BDF2F00FA10DD /* Images.xcassets */,
 				A9FFD784190BDF2F00FA10DD /* Supporting Files */,
 			);
@@ -302,6 +307,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A9DE7EEE19E2256C0001E251 /* MMPLocationsViewController.m in Sources */,
+				A97202F11A07B9E1008C27D3 /* MMPRegionsViewController.m in Sources */,
 				A9FFD78A190BDF2F00FA10DD /* main.m in Sources */,
 				A9FFD78E190BDF2F00FA10DD /* MMPAppDelegate.m in Sources */,
 			);

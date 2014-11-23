@@ -67,13 +67,14 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
 
 @property(strong, nonatomic) RACSignal *stopSignal;
 @property(strong, nonatomic) RACSignal *deferSignal;
-@property(strong, nonatomic) RACSignal *regionCommandSignal;
+@property(strong, nonatomic) NSMutableArray *regions;
 
 @property(strong, nonatomic) RACSubject *errorSubject;
 
 @property(strong, nonatomic) RACSubject *locationEventSubject;
 @property(strong, nonatomic) RACSignal *regionEventSignal;
 @property(strong, nonatomic) RACSubject *regionEventSubject;
+@property(strong, nonatomic) RACSignal *rangingEventSignal;
 
 @property(strong, nonatomic) RACSignal *locationSignal;
 @property(strong, nonatomic) RACSubject *locationSubject;
@@ -119,6 +120,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
     _headingFilter = 1;
     _headingOrientation = CLDeviceOrientationUnknown;
     self.shouldDisplayHeadingCalibrationBlock = nil;
+    self.regions = [NSMutableArray array];
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
     _authorizationType = MMPLocationAuthorizationTypeWhenInUse;
 #endif
@@ -235,9 +237,8 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
     return self;
 }
 
-- (instancetype)regionCommand:(RACSignal *)regionCommandSignal
-{
-    self.regionCommandSignal = regionCommandSignal;
+- (instancetype)region:(CLRegion *)region {
+    [_regions addObject:region];
     return self;
 }
 
@@ -515,17 +516,30 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
 
 - (RACSignal *)regionStates
 {
-    return [[self headingUpdates] filter:^BOOL(MMPRegionEvent *event) {
-        return event.type == MMPRegionEventTypeRegionStateDetermined;
-    }];
+    if (_regionEventSignal && _locationManager) {
+        for (CLRegion *region in _regions) {
+            [self.locationManager requestStateForRegion:region];
+        }
+        return [self.regionEventSubject filter:^BOOL(MMPRegionEvent *event) {
+            return event.type == MMPRegionEventTypeRegionStateDetermined;
+        }];
+    } else {
+        NSLog(@"[WARN] region event not started.");
+        return nil;
+    }
 }
 
-- (RACSignal *)regionEvents
-{
+- (RACSignal *)regionEvents {
+    
+    if (![_regions count]) {
+        NSLog(@"[WARN] no region specified.");
+        return nil;
+    }
+    
     @synchronized(self) {
         if (!_regionEventSignal) {
             
-            self.headingSubject = [RACSubject subject];
+            self.regionEventSubject = [RACSubject subject];
             
             @weakify(self)
             
@@ -548,25 +562,23 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                 [self _authorize:self.locationManager with:self.authorizationType];
 #endif
                 
-                [self.regionCommandSignal
-                      subscribeNext:^(MMPRegionCommandEvent *ev) {
-                          if (ev.type == MMPRegionCommandEventTypeStartMonitoring) {
-                              [self.locationManager startMonitoringForRegion:ev.region];
-                              MMPRxCL_LOG(@"[INFO] Location manager started monitoring region: %@", ev.region.identifier);
-                          } else if (ev.type == MMPRegionCommandEventTypeStopMonitoring) {
-                              [self.locationManager stopMonitoringForRegion:ev.region];
-                              MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring region: %@", ev.region.identifier);
-                          } else if (ev.type == MMPRegionCommandEventTypeStartRanging) {
-                              [self.locationManager startRangingBeaconsInRegion:(CLBeaconRegion *)ev.region];
-                              MMPRxCL_LOG(@"[INFO] Location manager started ranging beacon region: %@", ev.region.identifier);
-                          } else if (ev.type == MMPRegionCommandEventTypeStopRanging) {
-                              [self.locationManager startRangingBeaconsInRegion:(CLBeaconRegion *)ev.region];
-                              MMPRxCL_LOG(@"[INFO] Location manager started ranging beacon region: %@", ev.region.identifier);
-                          } else if (ev.type == MMPRegionCommandEventTypeRequestState) {
-                              [self.locationManager requestStateForRegion:ev.region];
-                              MMPRxCL_LOG(@"[INFO] Location manager requesting state for region: %@", ev.region.identifier);
-                          }
-                      }];
+                NSArray *regions = [NSArray arrayWithArray:_regions];
+                
+                for (CLRegion *region in regions) {
+                    [self.locationManager startMonitoringForRegion:region];
+                }
+                
+                MMPRxCL_LOG(@"[INFO] Location manager started monitoring regions");
+                
+                return [RACDisposable disposableWithBlock:^{
+                    self.locationManager.delegate = nil;
+                    for (CLRegion *region in regions) {
+                        [self.locationManager stopMonitoringForRegion:region];
+                    }
+                    self.locationManager = nil;
+                    
+                    MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring regions");
+                }];
                 
                 [self.regionEventSubject
                       subscribeNext:^(id x) {
@@ -588,6 +600,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                     
                     MMPRxCL_LOG(@"[INFO] region event: location manager stopped");
                 }];
+                
             }] publish];
             
             [conn connect];
@@ -597,6 +610,95 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
         }
     }
     return _regionEventSignal;
+}
+
+- (RACSignal *)rangingEvents {
+  
+    if (![_regions count]) {
+        NSLog(@"[WARN] no region specified.");
+        return nil;
+    }
+    
+    @synchronized(self) {
+        if (!_rangingEventSignal) {
+            
+            self.regionEventSubject = [RACSubject subject];
+            
+            @weakify(self)
+            
+            RACMulticastConnection *conn = [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+                
+                @strongify(self)
+                
+                if (!self.locationManager) {
+                    self.locationManager = [CLLocationManager new];
+                    self.locationManager.delegate = self;
+                } else {
+                    NSLog(@"[ERROR] reusing location manager");
+                    [subscriber sendError:[NSError errorWithDomain:MMPLocationErrorDomain
+                                                              code:MMPLocationErrorServiceAlreadyStarted
+                                                          userInfo:nil]];
+                    return nil;
+                }
+                
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+                [self _authorize:self.locationManager with:self.authorizationType];
+#endif
+                
+                NSArray *regions = [NSArray arrayWithArray:_regions];
+                
+                for (CLRegion *region in regions) {
+                    [self.locationManager startMonitoringForRegion:region];
+                }
+                
+                MMPRxCL_LOG(@"[INFO] Location manager started monitoring regions");
+                
+                return [RACDisposable disposableWithBlock:^{
+                    self.locationManager.delegate = nil;
+                    for (CLRegion *region in regions) {
+                        [self.locationManager stopMonitoringForRegion:region];
+                    }
+                    self.locationManager = nil;
+                    
+                    MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring regions");
+                }];
+                
+                [[self.regionEventSubject
+                  filter:^BOOL(MMPRegionEvent *event) {
+                      return
+                      event.type == MMPRegionEventTypeBeaconRanged ||
+                      event.type == MMPRegionEventTypeBeaconFailedRanging;
+                  }]
+                  subscribeNext:^(id x) {
+                      MMPRxCL_LOG(@"[INFO] region event subject: sending region event to subscribers");
+                      [subscriber sendNext:x];
+                  }
+                  error:^(NSError *error) {
+                      [subscriber sendError:error];
+                  }
+                  completed:^{
+                      MMPRxCL_LOG(@"[INFO] region event subject: sending completed to subscribers");
+                      [subscriber sendCompleted];
+                  }];
+                
+                return [RACDisposable disposableWithBlock:^{
+                    
+                    self.locationManager.delegate = nil;
+                    self.locationManager = nil;
+                    
+                    MMPRxCL_LOG(@"[INFO] region event: location manager stopped");
+                }];
+                
+            }] publish];
+            
+            [conn connect];
+            self.rangingEventSignal = conn.signal;
+            self.authorizationStatusSubject = [RACSubject subject];
+            self.errorSubject = [RACSubject subject];
+        }
+    }
+    return _rangingEventSignal;
+    
 }
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000

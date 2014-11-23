@@ -28,7 +28,6 @@
 #import <CoreBluetooth/CoreBluetooth.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
 #import "MMPRegionEvent.h"
-#import "MMPRegionCommandEvent.h"
 #import "MMPDeferEvent.h"
 
 #define MMP_LOCATION_AGE_LIMIT_DEFAULT 5.0
@@ -72,7 +71,7 @@ typedef NS_ENUM(NSInteger, MMPLocationEventType) {
 
 - (instancetype)stop:(RACSignal *)stopSignal;
 - (instancetype)defer:(RACSignal *)deferSignal;
-- (instancetype)regionCommand:(RACSignal *)regionCommandSignal;
+- (instancetype)region:(CLRegion *)region;
 
 - (RACSignal *)errors;
 - (RACSignal *)locations;

@@ -47,7 +47,7 @@
         <!--Region Signals-->
         <scene sceneID="XMG-WS-P8b">
             <objects>
-                <viewController id="8xz-sd-MBP" sceneMemberID="viewController">
+                <viewController id="8xz-sd-MBP" customClass="MMPRegionsViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="sRX-SE-M5m"/>
                         <viewControllerLayoutGuide type="bottom" id="tkt-ru-XrU"/>
@@ -55,9 +55,37 @@
                     <view key="view" contentMode="scaleToFill" id="jNK-Wq-qOS">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Region monitoring signal" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="H6e-gb-dnA">
+                                <rect key="frame" x="20" y="57" width="280" height="21"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="status" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="I3m-WM-yGd">
+                                <rect key="frame" x="20" y="86" width="280" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="HG4-cC-hGf">
+                                <rect key="frame" x="20" y="115" width="280" height="30"/>
+                                <state key="normal" title="Start region monitoring signal">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="locationButtonTouchUpInside:" destination="rFp-N6-5nk" eventType="touchUpInside" id="AXS-Vo-fbD"/>
+                                    <action selector="regionMonitoringButtonTouchUpInside:" destination="8xz-sd-MBP" eventType="touchUpInside" id="qhh-xA-eEA"/>
+                                </connections>
+                            </button>
+                        </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
                     <tabBarItem key="tabBarItem" title="Region Signals" id="jEC-D6-7f8"/>
+                    <connections>
+                        <outlet property="regionMonitoringButton" destination="HG4-cC-hGf" id="PX9-XA-Fba"/>
+                        <outlet property="regionMonitoringStatusLabel" destination="I3m-WM-yGd" id="w3I-wz-Zpa"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="zpG-uk-BUu" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
