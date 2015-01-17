@@ -559,7 +559,8 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                 }
                 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-                [self _authorize:self.locationManager with:self.authorizationType];
+                // force authorization to be "Always"
+                [self _authorize:self.locationManager with:MMPLocationAuthorizationTypeAlways];
 #endif
                 
                 NSArray *regions = [NSArray arrayWithArray:_regions];
@@ -569,16 +570,6 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                 }
                 
                 MMPRxCL_LOG(@"[INFO] Location manager started monitoring regions");
-                
-                return [RACDisposable disposableWithBlock:^{
-                    self.locationManager.delegate = nil;
-                    for (CLRegion *region in regions) {
-                        [self.locationManager stopMonitoringForRegion:region];
-                    }
-                    self.locationManager = nil;
-                    
-                    MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring regions");
-                }];
                 
                 [self.regionEventSubject
                       subscribeNext:^(id x) {
@@ -594,11 +585,17 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                       }];
                 
                 return [RACDisposable disposableWithBlock:^{
-                    
+                    // TODO: stop monitoring here causes stop monitoring event to never be sent to subscriber,
+                    // because the signal is completed/error already.
+                    // Should find a way so that the subscribers can receive stop monitoring event
+                    // before the signal is completed
+                    for (CLRegion *region in regions) {
+                        [self.locationManager stopMonitoringForRegion:region];
+                    }
                     self.locationManager.delegate = nil;
                     self.locationManager = nil;
                     
-                    MMPRxCL_LOG(@"[INFO] region event: location manager stopped");
+                    MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring regions");
                 }];
                 
             }] publish];
@@ -653,16 +650,6 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                 
                 MMPRxCL_LOG(@"[INFO] Location manager started monitoring regions");
                 
-                return [RACDisposable disposableWithBlock:^{
-                    self.locationManager.delegate = nil;
-                    for (CLRegion *region in regions) {
-                        [self.locationManager stopMonitoringForRegion:region];
-                    }
-                    self.locationManager = nil;
-                    
-                    MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring regions");
-                }];
-                
                 [[self.regionEventSubject
                   filter:^BOOL(MMPRegionEvent *event) {
                       return
@@ -682,11 +669,13 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
                   }];
                 
                 return [RACDisposable disposableWithBlock:^{
-                    
                     self.locationManager.delegate = nil;
+                    for (CLRegion *region in regions) {
+                        [self.locationManager stopMonitoringForRegion:region];
+                    }
                     self.locationManager = nil;
                     
-                    MMPRxCL_LOG(@"[INFO] region event: location manager stopped");
+                    MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring regions");
                 }];
                 
             }] publish];
@@ -849,18 +838,21 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
 
 - (void)locationManager:(CLLocationManager *)manager didEnterRegion:(CLRegion *)region
 {
+    MMPRxCL_LOG(@"[INFO] delegate: didEnterRegion: %@", region.identifier)
     [_regionEventSubject sendNext:[[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionEnter
                                                              forRegion:[region copy]]];
 }
 
 - (void)locationManager:(CLLocationManager *)manager didExitRegion:(CLRegion *)region
 {
+    MMPRxCL_LOG(@"[INFO] delegate: didExitRegion: %@", region.identifier)
     [_regionEventSubject sendNext:[[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionExit
                                                              forRegion:[region copy]]];
 }
 
 - (void)locationManager:(CLLocationManager *)manager didDetermineState:(CLRegionState)state forRegion:(CLRegion *)region
 {
+    MMPRxCL_LOG(@"[INFO] delegate: didDetermineState: %ld for:%@", state, region.identifier)
     [_regionEventSubject sendNext:[[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStateDetermined
                                                                  state:state
                                                              forRegion:[region copy]]];
@@ -868,6 +860,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
 
 - (void)locationManager:(CLLocationManager *)manager monitoringDidFailForRegion:(CLRegion *)region withError:(NSError *)error
 {
+    MMPRxCL_LOG(@"[INFO] delegate: monitoringDidFailForRegion: %@ error: %@", region.identifier, error)
     [_regionEventSubject sendNext:[[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionFailedMonitoring
                                                                  error:error
                                                              forRegion:[region copy]]];
@@ -875,6 +868,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
 
 - (void)locationManager:(CLLocationManager *)manager didStartMonitoringForRegion:(CLRegion *)region
 {
+    MMPRxCL_LOG(@"[INFO] delegate: didStartMonitoringForRegion: %@", region.identifier)
     [_regionEventSubject sendNext:[[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStartMonitoring
                                                              forRegion:[region copy]]];
 }
