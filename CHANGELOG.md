@@ -1,5 +1,10 @@
 # MMPReactiveCoreLocation CHANGELOG
 
+## 0.5.2
+
+* Fix: region monitoring didn't work.
+* Sample code for region monitoring.
+
 ## 0.5.1
 
 * Manual request for authorization (e.g. for MapKit integration).

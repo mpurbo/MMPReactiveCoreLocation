@@ -16,6 +16,16 @@ Features:
 * Supports iOS 8 "Always" and "WhenInUse" authorization.
 * CLLocationManager automatically started and stopped when the signal is subscribed or stopped.
 
+Although most CoreLocation services are implemented, many are not tested and should be considered as alpha quality. Features documented here are tested and should work:
+
+1. [Location subscription](#location-subscription)
+1. [Significant changes subscription](#significant-changes-subscription)
+1. [Region monitoring events subscription](#region-monitoring-events-subscription)
+1. [Stopping subscription](#stopping-subscription)
+1. [Custom location manager settings](#setting-location-manager)
+1. [Handling errors and status changes](#handling-errors-and-status-changes)
+1. [Manual authorization request](#manual-authorization-request)
+
 ## Installation
 
 MMPReactiveCoreLocation is available through [CocoaPods](http://cocoapods.org), to install
@@ -24,6 +34,8 @@ it simply add the following line to your Podfile:
     pod "MMPReactiveCoreLocation"
 
 ## Usage
+
+### Location Subscription
 
 The easiest way to subscribe to a location stream with sensible default settings is by calling `locations` method to get the signal:
 ```objc
@@ -44,6 +56,8 @@ If you don't need a constant stream of location updates, you can use `location` 
 }];
 ```
 
+### Significant Changes Subscription
+
 For significant change updates, use `significantLocationChanges` signal instead:
 ```objc
 // create MMPLocationManager, subscribe to 'significantLocationChanges' signal
@@ -52,14 +66,57 @@ For significant change updates, use `significantLocationChanges` signal instead:
 }];
 ```
 
+### Region Monitoring Events Subscription
+
+For region monitoring, use `region` for adding region to monitor, and `regionEvents` to get the signal:
+```objc
+[[[[MMPLocationManager new] region:region]
+                            regionEvents]
+                            subscribeNext:^(MMPRegionEvent *regionEvent) {
+                                NSLog(@"[INFO] received event: %ld for region: %@", regionEvent.type, regionEvent.region.identifier);
+                            }];
+```
+See `MMPRegionEventType` for more details on what region events are available.
+
+### Stopping Subscription
+
+To stop any signals and automatically cleanup the underlying location manager and requests, use `stop` method to specify a signal that would send a 'stop' notification when it is completed. For example, following code shows how to stop a location subscription using a subject:
+```objc
+// doneSubject is the subject that will be used to control location subscription stoppage
+self.doneSubject = [RACSubject subject];
+
+// use 'stop' to tell the service that it should stop when doneSubject is completed
+[[[[service stop:self.doneSubject]
+            locations]
+            subscribeOn:[RACScheduler mainThreadScheduler]]
+            subscribeNext:^(CLLocation *location) {
+                
+                NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
+                                       location.coordinate.latitude,
+                                       location.coordinate.longitude,
+                                       location.horizontalAccuracy];
+                NSLog(@"[INFO] received location: %@", locString);
+                self.locationLabel.text = locString;
+                
+            }
+            completed:^{
+                // by this time, the underlying CLLocationManager's service should be stopped and cleaned up.
+                // we can clean the subject here because it's should be completed already
+                self.doneSubject = nil;
+            }];
+
+// ... somewhere else when we want the service to stop
+[self.doneSubject sendCompleted];
+```
+
+### Setting Location Manager
+
 Default settings for the location signals are:
 - Automatically pauses for location updates. See [here](https://developer.apple.com/library/ios/documentation/CoreLocation/Reference/CLLocationManager_Class/#//apple_ref/occ/instp/CLLocationManager/pausesLocationUpdatesAutomatically).
 - Distance filter is [kCLDistanceFilterNone](https://developer.apple.com/LIBRARY/IOS/documentation/CoreLocation/Reference/CoreLocationConstantsRef/index.html#//apple_ref/doc/constant_group/Distance_Filter_Value). 
 - Desired accuracy is [kCLLocationAccuracyBest](https://developer.apple.com/library/mac/documentation/CoreLocation/Reference/CoreLocationConstantsRef/index.html#//apple_ref/c/data/kCLLocationAccuracyBest).
 - Activity type is [CLActivityTypeOther](https://developer.apple.com/library/ios/Documentation/CoreLocation/Reference/CLLocationManager_Class/index.html#//apple_ref/c/tdef/CLActivityType).
-- On iOS 8, authorization type is "WhenInUse" for `locations` and "Always" for `significantLocationChanges`.
-
-### Setting Location Manager
+- On iOS 8, authorization type is "WhenInUse" for `locations` and "Always" for `significantLocationChanges` and `regionEvents`.
 
 If you need other than default settings, then you chain-call following methods to set values that you want to customize:
 - `distanceFilter` for setting distance filter.
@@ -154,7 +211,7 @@ self.locationManagerForAuth = [MMPLocationManager new];
 
 ## Roadmap
 
-Most of the CLLocationManager functionalities including iBeacon, region monitoring, visit monitoring, etc. has been implemented *but* has not been extensively tested so there's bound to be bugs. I'm planning to use this in real world projects so it should be actively maintained. Contributions are welcomed.
+Most of the CLLocationManager functionalities including iBeacon, visit monitoring, heading updates, etc. has been implemented *but* has not been extensively tested so there's bound to be bugs. I'm planning to use this in real world projects so it should be actively maintained. Contributions are welcomed.
 
 I will write more usage samples and documentation as I fix bugs and write tests. In the meantime, if you have any question on how to apply certain CLLocationManager usage pattern using this library, please feel free to contact me or open issues.
 
