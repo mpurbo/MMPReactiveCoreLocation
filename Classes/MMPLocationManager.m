@@ -200,9 +200,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
 {
     self.stopSignal = stopSignal;
     
-    @weakify(self)
     [self.stopSignal subscribeCompleted:^{
-        @strongify(self)
         MMPRxCL_LOG(@"[INFO] location signal completed because stop signal is completed");
         [self resetSignals];
     }];
@@ -215,9 +213,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
     
     self.deferSignal = deferSignal;
     
-    @weakify(self)
     [self.deferSignal subscribeNext:^(MMPDeferEvent *deferEvent) {
-        @strongify(self)
         if (self.locationManager) {
             if (deferEvent.type == MMPDeferEventTypeAllow) {
                 MMPRxCL_LOG(@"[INFO] Allowing deferred location updates");
@@ -315,11 +311,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
             self.locationSubject = [RACSubject subject];
             self.locationEventSubject = [RACSubject subject];
             
-            @weakify(self)
-            
             RACMulticastConnection *conn = [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-                
-                @strongify(self)
                 
                 if (!self.locationManager) {
                     self.locationManager = [CLLocationManager new];
@@ -454,11 +446,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
             
             self.headingSubject = [RACSubject subject];
             
-            @weakify(self)
-            
             RACMulticastConnection *conn = [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-                
-                @strongify(self)
                 
                 if (!self.locationManager) {
                     self.locationManager = [CLLocationManager new];
@@ -541,11 +529,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
             
             self.regionEventSubject = [RACSubject subject];
             
-            @weakify(self)
-            
             RACMulticastConnection *conn = [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-                
-                @strongify(self)
                 
                 if (!self.locationManager) {
                     self.locationManager = [CLLocationManager new];
@@ -621,11 +605,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
             
             self.regionEventSubject = [RACSubject subject];
             
-            @weakify(self)
-            
             RACMulticastConnection *conn = [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-                
-                @strongify(self)
                 
                 if (!self.locationManager) {
                     self.locationManager = [CLLocationManager new];
@@ -699,11 +679,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
             
             self.visitSubject = [RACSubject subject];
             
-            @weakify(self)
-            
             RACMulticastConnection *conn = [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-                
-                @strongify(self)
                 
                 if (!self.locationManager) {
                     self.locationManager = [CLLocationManager new];
