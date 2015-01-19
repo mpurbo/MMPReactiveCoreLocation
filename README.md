@@ -37,7 +37,7 @@ it simply add the following line to your Podfile:
 
 ### Location Subscription
 
-The easiest way to subscribe to a location stream with sensible default settings is by calling `locations` method to get the signal:
+The easiest way to subscribe to a location stream with [sensible default settings](#setting-location-manager) is by calling `locations` method to get the signal:
 ```objc
 // import the header
 #import <MMPReactiveCoreLocation/MMPReactiveCoreLocation.h>
@@ -65,6 +65,7 @@ For significant change updates, use `significantLocationChanges` signal instead:
     NSLog(@"[INFO] received location: %@", location);
 }];
 ```
+Just as `locations` for constant updates and `location` for single update, use `significantLocationChanges` for constant significant location change updates and use `significantLocationChange` for single significant location change only.
 
 ### Region Monitoring Events Subscription
 
@@ -76,7 +77,7 @@ For region monitoring, use `region` for adding region to monitor, and `regionEve
                                 NSLog(@"[INFO] received event: %ld for region: %@", regionEvent.type, regionEvent.region.identifier);
                             }];
 ```
-See `MMPRegionEventType` for more details on what region events are available.
+You can also call `region` method multiple times to define multiple regions to monitor. See `MMPRegionEventType` for more details on what region events are available.
 
 ### Stopping Subscription
 
@@ -85,6 +86,7 @@ To stop any signals and automatically cleanup the underlying location manager an
 // doneSubject is the subject that will be used to control location subscription stoppage
 self.doneSubject = [RACSubject subject];
 
+MMPLocationManager *service = [MMPLocationManager new];
 // use 'stop' to tell the service that it should stop when doneSubject is completed
 [[[[service stop:self.doneSubject]
             locations]
