@@ -222,7 +222,7 @@ I will write more usage samples and documentation as I fix bugs and write tests.
 
 ## Contact
 
-MMPCoreDataHelper is maintained by [Mamad Purbo](https://twitter.com/purubo)
+MMPReactiveCoreLocation is maintained by [Mamad Purbo](https://twitter.com/purubo)
 
 ## License
 
