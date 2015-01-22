@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0B055A59583B492DB23ED081 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C180B19D5DB94D32BEB4AD7E /* libPods.a */; };
+		A902AF961A7098CB00016D89 /* MMPExperimentsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A902AF951A7098CB00016D89 /* MMPExperimentsViewController.m */; };
 		A97202F11A07B9E1008C27D3 /* MMPRegionsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A97202F01A07B9E1008C27D3 /* MMPRegionsViewController.m */; };
 		A9DE7EEE19E2256C0001E251 /* MMPLocationsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A9DE7EED19E2256C0001E251 /* MMPLocationsViewController.m */; };
 		A9FFD77E190BDF2F00FA10DD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9FFD77D190BDF2F00FA10DD /* Foundation.framework */; };
@@ -36,6 +37,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A902AF941A7098CB00016D89 /* MMPExperimentsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMPExperimentsViewController.h; sourceTree = "<group>"; };
+		A902AF951A7098CB00016D89 /* MMPExperimentsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MMPExperimentsViewController.m; sourceTree = "<group>"; };
 		A97202EF1A07B9E1008C27D3 /* MMPRegionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMPRegionsViewController.h; sourceTree = "<group>"; };
 		A97202F01A07B9E1008C27D3 /* MMPRegionsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MMPRegionsViewController.m; sourceTree = "<group>"; };
 		A9DE7EEC19E2256C0001E251 /* MMPLocationsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMPLocationsViewController.h; sourceTree = "<group>"; };
@@ -138,6 +141,8 @@
 				A9DE7EED19E2256C0001E251 /* MMPLocationsViewController.m */,
 				A97202EF1A07B9E1008C27D3 /* MMPRegionsViewController.h */,
 				A97202F01A07B9E1008C27D3 /* MMPRegionsViewController.m */,
+				A902AF941A7098CB00016D89 /* MMPExperimentsViewController.h */,
+				A902AF951A7098CB00016D89 /* MMPExperimentsViewController.m */,
 				A9FFD795190BDF2F00FA10DD /* Images.xcassets */,
 				A9FFD784190BDF2F00FA10DD /* Supporting Files */,
 			);
@@ -306,6 +311,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A902AF961A7098CB00016D89 /* MMPExperimentsViewController.m in Sources */,
 				A9DE7EEE19E2256C0001E251 /* MMPLocationsViewController.m in Sources */,
 				A97202F11A07B9E1008C27D3 /* MMPRegionsViewController.m in Sources */,
 				A9FFD78A190BDF2F00FA10DD /* main.m in Sources */,
