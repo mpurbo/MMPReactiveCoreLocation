@@ -5,7 +5,9 @@
 
 MMPReactiveCoreLocation is a reactive library for using CoreLocation and iBeacon with ReactiveCocoa. 
 
-**Important Note:**  version 0.5 has been redesigned and rewritten from scratch and is *incompatible* with version 0.4.\*. Documentation for version 0.4.\* is still available [here](README-0.4.md).
+**Important Notes:**  
+* I'm currently working on a new branch `exp` that will become the base for future versions (0.6~) and *will not be* backward compatible. There is a reason why I kept the version to be 0.x: I'm still experimenting and trying to find the best signal design for CoreLocation. The plan is to finalize the library design by 0.6.x and make it relatively stable. Version 0.6 will introduce simpler functions, safer signals, and smarter resource management.
+* Version 0.5 has been redesigned and rewritten from scratch and is *incompatible* with version 0.4.\*. Documentation for version 0.4.\* is still available [here](README-0.4.md).
 
 Features:
 * No more of that pesky delegates, all CLLocationManager's functionalities are available as signals.
@@ -217,8 +219,9 @@ Most of the CLLocationManager functionalities including iBeacon, visit monitorin
 
 I will write more usage samples and documentation as I fix bugs and write tests. In the meantime, if you have any question on how to apply certain CLLocationManager usage pattern using this library, please feel free to contact me or open issues.
 
-* 0.6: CoreBluetooth integration for iBeacon publishing.
-* 0.7: Unit tests and documentations.
+* 0.6: Refactors with simpler functions, safer signals, and smarter resource management.
+* 0.7: CoreBluetooth integration for iBeacon publishing.
+* 0.8: Unit tests and documentations.
 
 ## Contact
 
