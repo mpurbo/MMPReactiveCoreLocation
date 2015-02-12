@@ -34,21 +34,6 @@
 
 NSString * const MMPLocationErrorDomain = @"MMPLocationErrorDomain";
 
-typedef NS_ENUM(NSInteger, MMPLocationUpdateType) {
-    MMPLocationUpdateTypeUnknown = 0,
-    MMPLocationUpdateTypeStandard,
-    MMPLocationUpdateTypeSignificantChange
-};
-
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-
-typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
-    MMPLocationAuthorizationTypeAlways,
-    MMPLocationAuthorizationTypeWhenInUse
-};
-
-#endif
-
 @interface MMPLocationManager()<CLLocationManagerDelegate>
 
 @property(assign, nonatomic) BOOL pausesLocationUpdatesAutomatically;

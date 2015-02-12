@@ -10,6 +10,53 @@
 #import <CoreLocation/CoreLocation.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
+/*
+@interface MMPLocationManagerTrack : NSObject<CLLocationManagerDelegate>
+
+@property (nonatomic, strong) CLLocationManager *locationManager;
+@property (nonatomic, assign) NSUInteger subscribers;
+
+@end
+
+@implementation MMPLocationManagerTrack
+
+@end
+
+@interface MMPLocationManagerTracker : NSObject
+
+@property (nonatomic, strong) NSMutableDictionary *cache;
+@property (nonatomic, strong) id queue;
+
+@end
+
+@implementation MMPLocationManagerTracker
+
+- (id)init {
+    self = [super init];
+    if (self) {
+        self.cache = [NSMutableDictionary new];
+        self.queue = dispatch_queue_create("com.mikeash.cachequeue", DISPATCH_QUEUE_CONCURRENT);
+    }
+    return self;
+}
+
+- (id)cacheObjectForKey: (id)key {
+    __block id obj;
+    dispatch_sync(_queue, ^{
+        obj = [_cache objectForKey: key];
+    });
+    return obj;
+}
+
+- (void)setCacheObject: (id)obj forKey: (id)key {
+    dispatch_barrier_async(_queue, ^{
+        [_cache setObject: obj forKey: key];
+    });
+}
+
+@end
+*/
+
 @interface MMPExperimentsViewController ()<CLLocationManagerDelegate>
 
 @property (nonatomic, strong) CLLocationManager *locationManager;

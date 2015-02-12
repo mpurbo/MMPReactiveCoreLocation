@@ -24,3 +24,48 @@
 //
 
 #import "MMPLocationManager.h"
+#import "MMPResourceTracker.h"
+
+/*
+@interface MMPLocationManagerResource : NSObject<CLLocationManagerDelegate>
+
+@end
+*/
+
+@interface MMPLocationServiceBuilder : NSObject<MMPResourceLifecycleHelper>
+
++ (instancetype)create;
+
+- (instancetype)pauseLocationUpdatesAutomatically;
+- (instancetype)pauseLocationUpdatesManually;
+- (instancetype)distanceFilter:(CLLocationDistance)distanceFilter;
+- (instancetype)desiredAccuracy:(CLLocationAccuracy)desiredAccuracy;
+- (instancetype)activityType:(CLActivityType)activityType;
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+- (instancetype)authorizeAlways;
+- (instancetype)authorizeWhenInUse;
+#endif
+
+- (RACSignal *)locations;
+- (RACSignal *)significantLocationChanges;
+
+- (RACSignal *)errors;
+- (RACSignal *)authorizationStatus;
+
+- (void)stop;
+
+@end
+
+/*
+@interface MMPReactiveCoreLocation : NSObject
+
+// clue for improper use (produces compile time error)
++ (instancetype) alloc __attribute__((unavailable("alloc not available, call sharedInstance instead")));
+- (instancetype) init __attribute__((unavailable("init not available, call sharedInstance instead")));
++ (instancetype) new __attribute__((unavailable("new not available, call sharedInstance instead")));
+
++ (instancetype)instance;
+
+@end
+*/

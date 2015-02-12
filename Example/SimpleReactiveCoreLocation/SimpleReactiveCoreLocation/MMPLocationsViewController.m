@@ -13,7 +13,9 @@
 
 @property (nonatomic, strong) MMPLocationManager *locationManagerForAuth;
 
-@property (nonatomic, strong) RACSubject *doneSubject;
+@property (nonatomic, strong) MMPLocationServiceBuilder *locationsBuilder;
+
+//@property (nonatomic, strong) RACSubject *doneSubject;
 @property (nonatomic, strong) RACSubject *significantDoneSubject;
 
 @end
@@ -23,6 +25,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+    
+    self.locationsBuilder = nil;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -32,6 +36,29 @@
 
 - (IBAction)locationButtonTouchUpInside:(id)sender {
     
+    if (!_locationsBuilder) {
+        
+        self.locationsBuilder = [MMPLocationServiceBuilder create];
+        
+        [[[_locationsBuilder locations]
+                             subscribeOn:[RACScheduler mainThreadScheduler]]
+                             subscribeNext:^(CLLocation *location) {
+                                 NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
+                                                        location.coordinate.latitude,
+                                                        location.coordinate.longitude,
+                                                        location.horizontalAccuracy];
+                                 NSLog(@"[INFO] received location: %@", locString);
+                                 self.locationLabel.text = locString;
+                             }];
+        
+        [_locationButton setTitle:@"Stop location signal" forState:UIControlStateNormal];
+    } else {
+        [_locationsBuilder stop];
+        self.locationsBuilder = nil;
+        [_locationButton setTitle:@"Start location signal" forState:UIControlStateNormal];
+    }
+    
+    /*
     if (!_doneSubject) {
         
         self.doneSubject = [RACSubject subject];
@@ -95,6 +122,7 @@
         [_doneSubject sendCompleted];
         [_locationButton setTitle:@"Start location signal" forState:UIControlStateNormal];
     }
+    */
 }
 
 - (IBAction)singleLocationButtonTouchUpInside:(id)sender {
