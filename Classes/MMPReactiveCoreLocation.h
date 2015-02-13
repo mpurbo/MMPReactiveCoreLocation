@@ -26,12 +26,6 @@
 #import "MMPLocationManager.h"
 #import "MMPResourceTracker.h"
 
-/*
-@interface MMPLocationManagerResource : NSObject<CLLocationManagerDelegate>
-
-@end
-*/
-
 @interface MMPLocationServiceBuilder : NSObject<MMPResourceLifecycleHelper>
 
 + (instancetype)create;
@@ -48,7 +42,9 @@
 #endif
 
 - (RACSignal *)locations;
+- (RACSignal *)location;
 - (RACSignal *)significantLocationChanges;
+- (RACSignal *)significantLocationChange;
 
 - (RACSignal *)errors;
 - (RACSignal *)authorizationStatus;
@@ -56,16 +52,3 @@
 - (void)stop;
 
 @end
-
-/*
-@interface MMPReactiveCoreLocation : NSObject
-
-// clue for improper use (produces compile time error)
-+ (instancetype) alloc __attribute__((unavailable("alloc not available, call sharedInstance instead")));
-- (instancetype) init __attribute__((unavailable("init not available, call sharedInstance instead")));
-+ (instancetype) new __attribute__((unavailable("new not available, call sharedInstance instead")));
-
-+ (instancetype)instance;
-
-@end
-*/

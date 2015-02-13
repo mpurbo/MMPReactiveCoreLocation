@@ -7,6 +7,7 @@
 //
 
 #import "MMPReactiveCoreLocation.h"
+#import <ReactiveCocoa/RACEXTScope.h>
 
 #ifdef DEBUG
 #   define MMPRxCL_LOG(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
@@ -40,11 +41,6 @@
 
 - (id)initWithSettings:(MMPLocationManagerSettings *)settings;
 - (void)stop;
-
-- (RACSignal *)locations;
-
-- (RACSignal *)errors;
-- (RACSignal *)authorizationStatus;
 
 @end
 
@@ -105,7 +101,7 @@
     
 }
 
-- (RACSignal *)_locations {
+- (RACSignal *)locations {
     @synchronized(self) {
         if (_signal)
             return _signal;
@@ -118,14 +114,6 @@
         [self _startManager];
         return _signal;
     }
-}
-
-- (RACSignal *)locations {
-    return [self _locations];
-}
-
-- (RACSignal *)significantLocationChanges {
-    return [self _locations];
 }
 
 - (RACSignal *)errors {
@@ -243,18 +231,53 @@
 }
 #endif
 
+/**
+ *  Internal shared function for creating single location signal that will
+ *  automatically stop manager on disposal (after receiving 1 event)
+ *
+ *  @return Signal with 1 location event
+ */
+- (RACSignal *)_location {
+    MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+        [[[resource locations]
+                    take:1]
+                    subscribeNext:^(id x) {
+                        [subscriber sendNext:x];
+                    }
+                    completed:^{
+                        [subscriber sendCompleted];
+                    }];
+        return [RACDisposable disposableWithBlock:^{
+            [self stop];
+        }];
+    }];
+}
+
 - (RACSignal *)locations {
-    // TODO: should finalize the builder (call to another final method should cause an error)
+    // TODO: should finalize the builder (call to another terminal method should cause an error)
     _settings.updateType = MMPLocationUpdateTypeStandard;
     MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
     return [resource locations];
 }
 
+- (RACSignal *)location {
+    // TODO: should finalize the builder (call to another terminal method should cause an error)
+    _settings.updateType = MMPLocationUpdateTypeStandard;
+    return [self _location];
+}
+
 - (RACSignal *)significantLocationChanges {
-    // TODO: should finalize the builder (call to another final method should cause an error)
+    // TODO: should finalize the builder (call to another terminal method should cause an error)
     _settings.updateType = MMPLocationUpdateTypeSignificantChange;
     MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
-    return [resource significantLocationChanges];
+    return [resource locations];
+}
+
+- (RACSignal *)significantLocationChange {
+    // TODO: should finalize the builder (call to another terminal method should cause an error)
+    _settings.updateType = MMPLocationUpdateTypeSignificantChange;
+    return [self _location];
 }
 
 - (RACSignal *)errors {
@@ -273,25 +296,3 @@
 }
 
 @end
-/*
-@implementation MMPReactiveCoreLocation
-
-+ (instancetype)instance {
-    static dispatch_once_t pred;
-    static id shared = nil;
-    dispatch_once(&pred, ^{
-        shared = [[super alloc] initSingletonInstance];
-    });
-    return shared;
-}
-
-- (instancetype)initSingletonInstance {
-    self = [super init];
-    if (self) {
-        
-    }
-    return self;
-}
-
-@end
-*/

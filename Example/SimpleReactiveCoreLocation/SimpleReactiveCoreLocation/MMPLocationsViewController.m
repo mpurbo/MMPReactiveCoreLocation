@@ -126,7 +126,23 @@
 }
 
 - (IBAction)singleLocationButtonTouchUpInside:(id)sender {
+
+    [[[[MMPLocationServiceBuilder create]
+                                  location]
+                                  subscribeOn:[RACScheduler mainThreadScheduler]]
+                                  subscribeNext:^(CLLocation *location) {
+                                      NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
+                                                             location.coordinate.latitude,
+                                                             location.coordinate.longitude,
+                                                             location.horizontalAccuracy];
+                                      NSLog(@"[INFO] received single location: %@", locString);
+                                      self.singleLocationLabel.text = locString;
+                                  }
+                                  completed:^{
+                                      NSLog(@"[INFO] single location signal completed.");
+                                  }];
     
+    /*
     MMPLocationManager *service = [MMPLocationManager new];
     
     [[[service location]
@@ -141,7 +157,7 @@
                    self.singleLocationLabel.text = locString;
                    
                }];
-    
+    */
 }
 
 - (IBAction)significantLocationButtonTouchUpInside:(id)sender {
