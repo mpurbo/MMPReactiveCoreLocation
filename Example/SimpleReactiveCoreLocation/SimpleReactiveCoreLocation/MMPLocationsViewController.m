@@ -144,41 +144,38 @@
 
 - (IBAction)requestForAuthTouchUpInside:(id)sender {
     
-    /*
-    self.locationManagerForAuth = [MMPLocationManager new];
-    
-    [[[self.locationManagerForAuth
-       authorizeAlways]
-       requestAuthorization]
-       subscribeNext:^(NSNumber *statusNumber) {
-           CLAuthorizationStatus status = [statusNumber intValue];
-           switch (status) {
-               case kCLAuthorizationStatusNotDetermined:
-                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusNotDetermined";
-                   break;
-               case kCLAuthorizationStatusRestricted:
-                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusRestricted";
-                   break;
-               case kCLAuthorizationStatusDenied:
-                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusDenied";
-                   break;
+    [[[[MMPReactiveCoreLocation service]
+                                authorizeAlways]
+                                authorize]
+                                subscribeNext:^(NSNumber *statusNumber) {
+                                    CLAuthorizationStatus status = [statusNumber intValue];
+                                    switch (status) {
+                                        case kCLAuthorizationStatusNotDetermined:
+                                            self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusNotDetermined";
+                                            break;
+                                        case kCLAuthorizationStatusRestricted:
+                                            self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusRestricted";
+                                            break;
+                                        case kCLAuthorizationStatusDenied:
+                                            self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusDenied";
+                                            break;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-               case kCLAuthorizationStatusAuthorizedAlways:
-                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusAuthorizedAlways";
-                   break;
-               case kCLAuthorizationStatusAuthorizedWhenInUse:
-                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusAuthorizedWhenInUse";
-                   break;
+                                        case kCLAuthorizationStatusAuthorizedAlways:
+                                            self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusAuthorizedAlways";
+                                            break;
+                                        case kCLAuthorizationStatusAuthorizedWhenInUse:
+                                            self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusAuthorizedWhenInUse";
+                                            break;
 #else
-               case kCLAuthorizationStatusAuthorized:
-                   self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusAuthorized";
-                   break;
+                                        case kCLAuthorizationStatusAuthorized:
+                                            self.authorizationStatusLabel.text = @"Status: kCLAuthorizationStatusAuthorized";
+                                            break;
 #endif
-               default:
-                   break;
-           }
-       }];
-     */
+                                        default:
+                                            break;
+                                    }
+                                }];
+    
 }
 
 @end

@@ -48,6 +48,9 @@
 
 - (RACSignal *)errors;
 - (RACSignal *)authorizationStatus;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+- (RACSignal *)authorize;
+#endif
 
 - (void)stop;
 

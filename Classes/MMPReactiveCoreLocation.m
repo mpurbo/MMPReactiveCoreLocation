@@ -20,6 +20,7 @@
 @property(assign, nonatomic) MMPLocationUpdateType updateType;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
 @property(assign, nonatomic) MMPLocationAuthorizationType authorizationType;
+@property(assign, nonatomic) BOOL requestForAuthOnly;
 #endif
 
 @property(assign, nonatomic) BOOL pausesLocationUpdatesAutomatically;
@@ -108,9 +109,9 @@
         
         self.signal = [[self rac_signalForSelector:@selector(locationManager:didUpdateLocations:)
                                       fromProtocol:@protocol(CLLocationManagerDelegate)]
-                       reduceEach:^id(id _, NSArray *locations) {
-                           return [locations lastObject];
-                       }];
+                             reduceEach:^id(id _, NSArray *locations) {
+                                 return [locations lastObject];
+                             }];
         [self _startManager];
         return _signal;
     }
@@ -119,24 +120,31 @@
 - (RACSignal *)errors {
     return [[[[self rac_signalForSelector:@selector(locationManager:didFailWithError:)
                              fromProtocol:@protocol(CLLocationManagerDelegate)]
-              reduceEach:^id(id _, NSError *error){
-                  return error;
-              }]
-             filter:^BOOL(NSError *error) {
-                 return error.code != kCLErrorLocationUnknown;
-             }]
-            flattenMap:^RACStream *(NSError *error) {
-                return [RACSignal error:error];
-            }];
+                    reduceEach:^id(id _, NSError *error){
+                        return error;
+                    }]
+                    filter:^BOOL(NSError *error) {
+                        return error.code != kCLErrorLocationUnknown;
+                    }]
+                    flattenMap:^RACStream *(NSError *error) {
+                        return [RACSignal error:error];
+                    }];
 }
 
 - (RACSignal *)authorizationStatus {
     return [[self rac_signalForSelector:@selector(locationManager:didChangeAuthorizationStatus:)
                            fromProtocol:@protocol(CLLocationManagerDelegate)]
-            reduceEach:^id(id _, id statusNumber){
-                return statusNumber;
-            }];
+                  reduceEach:^id(id _, id statusNumber){
+                      return statusNumber;
+                  }];
 }
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+- (RACSignal *)authorize {
+    [self _authorize:_manager with:_settings.authorizationType];
+    return [self authorizationStatus];
+}
+#endif
 
 @end
 
@@ -160,12 +168,20 @@
 #pragma mark - MMPResourceLifecycleHelper implementation
 
 - (NSString *)key {
-    return [NSString stringWithFormat:@"%ld~%d~%.5f~%.5f~%ld",
-            _settings.updateType,
-            _settings.pausesLocationUpdatesAutomatically,
-            _settings.distanceFilter,
-            _settings.desiredAccuracy,
-            _settings.activityType];
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    if (_settings.requestForAuthOnly) {
+        return [NSString stringWithFormat:@"rfauth~%ld", _settings.authorizationType];
+    } else {
+#endif
+        return [NSString stringWithFormat:@"%ld~%d~%.5f~%.5f~%ld",
+                _settings.updateType,
+                _settings.pausesLocationUpdatesAutomatically,
+                _settings.distanceFilter,
+                _settings.desiredAccuracy,
+                _settings.activityType];
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    }
+#endif
 }
 
 - (id<MMPResource>)createResource {
@@ -188,6 +204,7 @@
     _settings.updateType = MMPLocationUpdateTypeUnknown;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
     _settings.authorizationType = MMPLocationAuthorizationTypeWhenInUse;
+    _settings.requestForAuthOnly = NO;
 #endif
     
     _settings.pausesLocationUpdatesAutomatically = YES;
@@ -323,6 +340,16 @@
     MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
     return [resource authorizationStatus];
 }
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+- (RACSignal *)authorize {
+    return [self _terminal:^RACSignal *{
+        _settings.requestForAuthOnly = YES;
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+        return [resource authorize];
+    }];
+}
+#endif
 
 - (void)stop {
     NSUInteger refCount = [[MMPResourceTracker instance] releaseResourceWithHelper:self];
