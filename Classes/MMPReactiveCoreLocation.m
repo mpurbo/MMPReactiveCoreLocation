@@ -143,6 +143,7 @@
 @interface MMPLocationServiceBuilder()
 
 @property (nonatomic, strong) MMPLocationManagerSettings *settings;
+@property (nonatomic, assign) BOOL finalized; // updated within @synchonized, so no need to make it atomic here
 
 @end
 
@@ -151,6 +152,7 @@
 - (id)init {
     if (self = [super init]) {
         [self defaultSettings];
+        self.finalized = NO;
     }
     return self;
 }
@@ -174,7 +176,7 @@
     [(MMPLocationManagerResource *)resource stop];
 }
 
-#pragma mark - MMPLocationServiceBuilder implementation
+#pragma mark - MMPLocationServiceBuilder: settings implementation
 
 + (instancetype)create {
     return [MMPLocationServiceBuilder new];
@@ -231,6 +233,8 @@
 }
 #endif
 
+#pragma mark - MMPLocationServiceBuilder: internal methods
+
 /**
  *  Internal shared function for creating single location signal that will
  *  automatically stop manager on disposal (after receiving 1 event)
@@ -254,30 +258,51 @@
     }];
 }
 
+/**
+ *  Internal shared function for finalizing the builder. Called by all terminal
+ *  functions.
+ */
+- (RACSignal *)_terminal:(RACSignal * (^)(void))signalBlock {
+    @synchronized(self) {
+        if (!self.finalized) {
+            self.finalized = YES;
+            return signalBlock();
+        }
+    }
+    NSLog(@"[ERROR] The builder has been finalized, one of the terminal functions has been called.");
+    return nil;
+}
+
+#pragma mark - MMPLocationServiceBuilder: signals implementation
+
 - (RACSignal *)locations {
-    // TODO: should finalize the builder (call to another terminal method should cause an error)
-    _settings.updateType = MMPLocationUpdateTypeStandard;
-    MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
-    return [resource locations];
+    return [self _terminal:^RACSignal *{
+        _settings.updateType = MMPLocationUpdateTypeStandard;
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+        return [resource locations];
+    }];
 }
 
 - (RACSignal *)location {
-    // TODO: should finalize the builder (call to another terminal method should cause an error)
-    _settings.updateType = MMPLocationUpdateTypeStandard;
-    return [self _location];
+    return [self _terminal:^RACSignal *{
+        _settings.updateType = MMPLocationUpdateTypeStandard;
+        return [self _location];
+    }];
 }
 
 - (RACSignal *)significantLocationChanges {
-    // TODO: should finalize the builder (call to another terminal method should cause an error)
-    _settings.updateType = MMPLocationUpdateTypeSignificantChange;
-    MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
-    return [resource locations];
+    return [self _terminal:^RACSignal *{
+        _settings.updateType = MMPLocationUpdateTypeSignificantChange;
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+        return [resource locations];
+    }];
 }
 
 - (RACSignal *)significantLocationChange {
-    // TODO: should finalize the builder (call to another terminal method should cause an error)
-    _settings.updateType = MMPLocationUpdateTypeSignificantChange;
-    return [self _location];
+    return [self _terminal:^RACSignal *{
+        _settings.updateType = MMPLocationUpdateTypeSignificantChange;
+        return [self _location];
+    }];
 }
 
 - (RACSignal *)errors {
