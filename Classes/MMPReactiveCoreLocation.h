@@ -26,9 +26,9 @@
 #import "MMPLocationManager.h"
 #import "MMPResourceTracker.h"
 
-@interface MMPLocationServiceBuilder : NSObject<MMPResourceLifecycleHelper>
+@interface MMPReactiveCoreLocation : NSObject<MMPResourceLifecycleHelper>
 
-+ (instancetype)create;
++ (instancetype)service;
 
 - (instancetype)pauseLocationUpdatesAutomatically;
 - (instancetype)pauseLocationUpdatesManually;

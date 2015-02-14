@@ -13,10 +13,8 @@
 
 @property (nonatomic, strong) MMPLocationManager *locationManagerForAuth;
 
-@property (nonatomic, strong) MMPLocationServiceBuilder *locationsBuilder;
-
-//@property (nonatomic, strong) RACSubject *doneSubject;
-@property (nonatomic, strong) RACSubject *significantDoneSubject;
+@property (nonatomic, strong) MMPReactiveCoreLocation *locationService;
+@property (nonatomic, strong) MMPReactiveCoreLocation *significantService;
 
 @end
 
@@ -26,7 +24,8 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     
-    self.locationsBuilder = nil;
+    self.locationService = nil;
+    self.significantService = nil;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -36,193 +35,108 @@
 
 - (IBAction)locationButtonTouchUpInside:(id)sender {
     
-    if (!_locationsBuilder) {
+    if (!_locationService) {
         
-        self.locationsBuilder = [MMPLocationServiceBuilder create];
+        self.locationService = [MMPReactiveCoreLocation service];
         
-        [[[_locationsBuilder locations]
-                             subscribeOn:[RACScheduler mainThreadScheduler]]
-                             subscribeNext:^(CLLocation *location) {
-                                 NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
-                                                        location.coordinate.latitude,
-                                                        location.coordinate.longitude,
-                                                        location.horizontalAccuracy];
-                                 NSLog(@"[INFO] received location: %@", locString);
-                                 self.locationLabel.text = locString;
-                             }];
-        
-        [_locationButton setTitle:@"Stop location signal" forState:UIControlStateNormal];
-    } else {
-        [_locationsBuilder stop];
-        self.locationsBuilder = nil;
-        [_locationButton setTitle:@"Start location signal" forState:UIControlStateNormal];
-    }
-    
-    /*
-    if (!_doneSubject) {
-        
-        self.doneSubject = [RACSubject subject];
-        
-        MMPLocationManager *service = [MMPLocationManager new];
-        
-        [[[[service stop:_doneSubject]
-                    locations]
-                    subscribeOn:[RACScheduler mainThreadScheduler]]
-                    subscribeNext:^(CLLocation *location) {
-                        
-                        NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
-                                               location.coordinate.latitude,
-                                               location.coordinate.longitude,
-                                               location.horizontalAccuracy];
-                        NSLog(@"[INFO] received location: %@", locString);
-                        self.locationLabel.text = locString;
-                        
-                    }
-                    completed:^{
-                        self.doneSubject = nil;
-                    }];
-        
-        [[service authorizationStatus] subscribeNext:^(NSNumber *statusNumber) {
-            CLAuthorizationStatus status = [statusNumber intValue];
-            switch (status) {
-                case kCLAuthorizationStatusNotDetermined:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusNotDetermined");
-                    break;
-                case kCLAuthorizationStatusRestricted:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusRestricted");
-                    break;
-                case kCLAuthorizationStatusDenied:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusDenied");
-                    break;
+        // subscribe to authorization status
+        [[_locationService authorizationStatus]
+                           subscribeNext:^(NSNumber *statusNumber) {
+                               CLAuthorizationStatus status = [statusNumber intValue];
+                               switch (status) {
+                                   case kCLAuthorizationStatusNotDetermined:
+                                       NSLog(@"[INFO] Status changed: kCLAuthorizationStatusNotDetermined");
+                                       break;
+                                   case kCLAuthorizationStatusRestricted:
+                                       NSLog(@"[INFO] Status changed: kCLAuthorizationStatusRestricted");
+                                       break;
+                                   case kCLAuthorizationStatusDenied:
+                                       NSLog(@"[INFO] Status changed: kCLAuthorizationStatusDenied");
+                                       break;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-                case kCLAuthorizationStatusAuthorizedAlways:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedAlways");
-                    break;
-                case kCLAuthorizationStatusAuthorizedWhenInUse:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedWhenInUse");
-                    break;
+                                   case kCLAuthorizationStatusAuthorizedAlways:
+                                       NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedAlways");
+                                       break;
+                                   case kCLAuthorizationStatusAuthorizedWhenInUse:
+                                       NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedWhenInUse");
+                                       break;
 #else
-                case kCLAuthorizationStatusAuthorized:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorized");
-                    break;
+                                   case kCLAuthorizationStatusAuthorized:
+                                       NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorized");
+                                       break;
 #endif
-                default:
-                    break;
-            }
-        }];
+                                   default:
+                                       break;
+                               }
+                           }];
         
-        [[service errors] subscribeNext:^(NSError *error) {
+        // subscribe to errors
+        [[_locationService errors] subscribeNext:^(NSError *error) {
             NSLog(@"[ERROR] Location service error: %@", error);
         }];
         
+        // subscribe to locations
+        [[[_locationService locations]
+                            subscribeOn:[RACScheduler mainThreadScheduler]]
+                            subscribeNext:^(CLLocation *location) {
+                                NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
+                                                       location.coordinate.latitude,
+                                                       location.coordinate.longitude,
+                                                       location.horizontalAccuracy];
+                                NSLog(@"[INFO] received location: %@", locString);
+                                self.locationLabel.text = locString;
+                            }];
+        
         [_locationButton setTitle:@"Stop location signal" forState:UIControlStateNormal];
-        
     } else {
-        
-        [_doneSubject sendCompleted];
+        [_locationService stop];
+        self.locationService = nil;
         [_locationButton setTitle:@"Start location signal" forState:UIControlStateNormal];
     }
-    */
+    
 }
 
 - (IBAction)singleLocationButtonTouchUpInside:(id)sender {
 
-    [[[[MMPLocationServiceBuilder create]
-                                  location]
-                                  subscribeOn:[RACScheduler mainThreadScheduler]]
-                                  subscribeNext:^(CLLocation *location) {
-                                      NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
-                                                             location.coordinate.latitude,
-                                                             location.coordinate.longitude,
-                                                             location.horizontalAccuracy];
-                                      NSLog(@"[INFO] received single location: %@", locString);
-                                      self.singleLocationLabel.text = locString;
-                                  }
-                                  completed:^{
-                                      NSLog(@"[INFO] single location signal completed.");
-                                  }];
+    [[[[MMPReactiveCoreLocation service]
+                                location]
+                                subscribeOn:[RACScheduler mainThreadScheduler]]
+                                subscribeNext:^(CLLocation *location) {
+                                    NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
+                                                           location.coordinate.latitude,
+                                                           location.coordinate.longitude,
+                                                           location.horizontalAccuracy];
+                                    NSLog(@"[INFO] received single location: %@", locString);
+                                    self.singleLocationLabel.text = locString;
+                                }
+                                completed:^{
+                                    NSLog(@"[INFO] single location signal completed.");
+                                }];
     
-    /*
-    MMPLocationManager *service = [MMPLocationManager new];
-    
-    [[[service location]
-               subscribeOn:[RACScheduler mainThreadScheduler]]
-               subscribeNext:^(CLLocation *location) {
-                   
-                   NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
-                                          location.coordinate.latitude,
-                                          location.coordinate.longitude,
-                                          location.horizontalAccuracy];
-                   NSLog(@"[INFO] received single location: %@", locString);
-                   self.singleLocationLabel.text = locString;
-                   
-               }];
-    */
 }
 
 - (IBAction)significantLocationButtonTouchUpInside:(id)sender {
     
-    if (!_significantDoneSubject) {
+    if (!_significantService) {
         
-        self.significantDoneSubject = [RACSubject subject];
+        self.significantService = [MMPReactiveCoreLocation service];
         
-        MMPLocationManager *service = [MMPLocationManager new];
-        
-        [[[[service stop:_significantDoneSubject]
-                    significantLocationChanges]
-                    subscribeOn:[RACScheduler mainThreadScheduler]]
-                    subscribeNext:^(CLLocation *location) {
-                        
-                        NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
-                                               location.coordinate.latitude,
-                                               location.coordinate.longitude,
-                                               location.horizontalAccuracy];
-                        NSLog(@"[INFO] received significant change location: %@", locString);
-                        self.significantLocationLabel.text = locString;
-                        
-                    }
-                    completed:^{
-                        self.significantDoneSubject = nil;
-                    }];
-        
-        [[service authorizationStatus] subscribeNext:^(NSNumber *statusNumber) {
-            CLAuthorizationStatus status = [statusNumber intValue];
-            switch (status) {
-                case kCLAuthorizationStatusNotDetermined:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusNotDetermined");
-                    break;
-                case kCLAuthorizationStatusRestricted:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusRestricted");
-                    break;
-                case kCLAuthorizationStatusDenied:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusDenied");
-                    break;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-                case kCLAuthorizationStatusAuthorizedAlways:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedAlways");
-                    break;
-                case kCLAuthorizationStatusAuthorizedWhenInUse:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorizedWhenInUse");
-                    break;
-#else
-                case kCLAuthorizationStatusAuthorized:
-                    NSLog(@"[INFO] Status changed: kCLAuthorizationStatusAuthorized");
-                    break;
-#endif
-                default:
-                    break;
-            }
-        }];
-        
-        [[service errors] subscribeNext:^(NSError *error) {
-            NSLog(@"[ERROR] Location service error: %@", error);
-        }];
+        // subscribe to significant location changes
+        [[[_significantService significantLocationChanges]
+                               subscribeOn:[RACScheduler mainThreadScheduler]]
+                               subscribeNext:^(CLLocation *location) {
+                                   NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
+                                                          location.coordinate.latitude,
+                                                          location.coordinate.longitude,
+                                                          location.horizontalAccuracy];
+                                   NSLog(@"[INFO] received significant change location: %@", locString);
+                                   self.significantLocationLabel.text = locString;
+                               }];
         
         [_significantLocationButton setTitle:@"Stop significant location change signal" forState:UIControlStateNormal];
-        
     } else {
-        
-        [_significantDoneSubject sendCompleted];
+        [_significantService stop];
+        self.significantService = nil;
         [_significantLocationButton setTitle:@"Start significant location change signal" forState:UIControlStateNormal];
     }
     
@@ -230,6 +144,7 @@
 
 - (IBAction)requestForAuthTouchUpInside:(id)sender {
     
+    /*
     self.locationManagerForAuth = [MMPLocationManager new];
     
     [[[self.locationManagerForAuth
@@ -263,6 +178,7 @@
                    break;
            }
        }];
+     */
 }
 
 @end

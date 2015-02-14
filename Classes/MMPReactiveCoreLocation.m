@@ -140,14 +140,14 @@
 
 @end
 
-@interface MMPLocationServiceBuilder()
+@interface MMPReactiveCoreLocation()
 
 @property (nonatomic, strong) MMPLocationManagerSettings *settings;
 @property (nonatomic, assign) BOOL finalized; // updated within @synchonized, so no need to make it atomic here
 
 @end
 
-@implementation MMPLocationServiceBuilder
+@implementation MMPReactiveCoreLocation
 
 - (id)init {
     if (self = [super init]) {
@@ -176,10 +176,10 @@
     [(MMPLocationManagerResource *)resource stop];
 }
 
-#pragma mark - MMPLocationServiceBuilder: settings implementation
+#pragma mark - MMPReactiveCoreLocation: settings implementation
 
-+ (instancetype)create {
-    return [MMPLocationServiceBuilder new];
++ (instancetype)service {
+    return [MMPReactiveCoreLocation new];
 }
 
 - (void)defaultSettings {
@@ -233,7 +233,7 @@
 }
 #endif
 
-#pragma mark - MMPLocationServiceBuilder: internal methods
+#pragma mark - MMPReactiveCoreLocation: internal methods
 
 /**
  *  Internal shared function for creating single location signal that will
@@ -273,7 +273,16 @@
     return nil;
 }
 
-#pragma mark - MMPLocationServiceBuilder: signals implementation
+- (void)_prepareSignificantChange {
+    _settings.updateType = MMPLocationUpdateTypeSignificantChange;
+    // significant location changes requires "Always"
+    if (_settings.authorizationType != MMPLocationAuthorizationTypeAlways) {
+        MMPRxCL_LOG(@"[INFO] Significant location changes requires \"Always\" authorization, automatically change the authorization type.")
+        _settings.authorizationType = MMPLocationAuthorizationTypeAlways;
+    }
+}
+
+#pragma mark - MMPReactiveCoreLocation: signals implementation
 
 - (RACSignal *)locations {
     return [self _terminal:^RACSignal *{
@@ -292,7 +301,7 @@
 
 - (RACSignal *)significantLocationChanges {
     return [self _terminal:^RACSignal *{
-        _settings.updateType = MMPLocationUpdateTypeSignificantChange;
+        [self _prepareSignificantChange];
         MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
         return [resource locations];
     }];
@@ -300,7 +309,7 @@
 
 - (RACSignal *)significantLocationChange {
     return [self _terminal:^RACSignal *{
-        _settings.updateType = MMPLocationUpdateTypeSignificantChange;
+        [self _prepareSignificantChange];
         return [self _location];
     }];
 }
