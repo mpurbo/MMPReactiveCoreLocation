@@ -15,18 +15,27 @@
 #   define MMPRxCL_LOG(...)
 #endif
 
+typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
+    MMPLocationServiceTypeUnknown = 0,
+    MMPLocationServiceTypeAuthOnly,
+    MMPLocationServiceTypeLocation,
+    MMPLocationServiceTypeSignificantChange,
+    MMPLocationServiceTypeRegionMonitoring
+};
+
 @interface MMPLocationManagerSettings : NSObject
 
-@property(assign, nonatomic) MMPLocationUpdateType updateType;
+@property(assign, nonatomic) MMPLocationServiceType locationServiceType;
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
 @property(assign, nonatomic) MMPLocationAuthorizationType authorizationType;
-@property(assign, nonatomic) BOOL requestForAuthOnly;
 #endif
 
 @property(assign, nonatomic) BOOL pausesLocationUpdatesAutomatically;
 @property(assign, nonatomic) CLLocationDistance distanceFilter;
 @property(assign, nonatomic) CLLocationAccuracy desiredAccuracy;
 @property(assign, nonatomic) CLActivityType activityType;
+@property(strong, nonatomic) NSMutableArray *regions;
 
 @end
 
@@ -59,9 +68,17 @@
 }
 
 - (void)stop {
-    // TODO: stop service according to the type of signal requested originally
-    [_manager stopUpdatingLocation];
-    MMPRxCL_LOG(@"[INFO] Location manager stopped");
+    if (_settings.locationServiceType == MMPLocationServiceTypeLocation) {
+        [_manager stopUpdatingLocation];
+        MMPRxCL_LOG(@"[INFO] Location manager stopped updating location");
+    } else if (_settings.locationServiceType == MMPLocationServiceTypeSignificantChange) {
+        [_manager stopMonitoringSignificantLocationChanges];
+        MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring significant location change");
+    } else if (_settings.locationServiceType == MMPLocationServiceTypeRegionMonitoring) {
+        for (CLRegion *region in _settings.regions) {
+            [_manager stopMonitoringForRegion:region];
+        }
+    }
 }
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
@@ -81,23 +98,32 @@
 
 - (void)_startManager {
     
-    _manager.pausesLocationUpdatesAutomatically = _settings.pausesLocationUpdatesAutomatically;
-    _manager.distanceFilter = _settings.distanceFilter;
-    _manager.desiredAccuracy = _settings.desiredAccuracy;
-    _manager.activityType = _settings.activityType;
+    if (_settings.locationServiceType == MMPLocationServiceTypeLocation ||
+        _settings.locationServiceType == MMPLocationServiceTypeSignificantChange) {
+        
+        _manager.pausesLocationUpdatesAutomatically = _settings.pausesLocationUpdatesAutomatically;
+        _manager.distanceFilter = _settings.distanceFilter;
+        _manager.desiredAccuracy = _settings.desiredAccuracy;
+        _manager.activityType = _settings.activityType;
+    }
     
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
     [self _authorize:_manager with:_settings.authorizationType];
 #endif
     
-    if (_settings.updateType == MMPLocationUpdateTypeStandard) {
+    if (_settings.locationServiceType == MMPLocationServiceTypeLocation) {
         [_manager startUpdatingLocation];
         MMPRxCL_LOG(@"[INFO] Location manager started updating location")
-    } else if (_settings.updateType == MMPLocationUpdateTypeSignificantChange) {
+    } else if (_settings.locationServiceType == MMPLocationServiceTypeSignificantChange) {
         [_manager startMonitoringSignificantLocationChanges];
         MMPRxCL_LOG(@"[INFO] Location manager started monitoring significant location change")
+    } else if (_settings.locationServiceType == MMPLocationServiceTypeRegionMonitoring) {
+        for (CLRegion *region in _settings.regions) {
+            [_manager startMonitoringForRegion:region];
+        }
+        MMPRxCL_LOG(@"[INFO] Location manager started monitoring regions")
     } else {
-        NSLog(@"[WARN] Unknown location update type: %ld, not starting anything.", (long)_settings.updateType);
+        NSLog(@"[WARN] Unknown location update type: %ld, not starting anything.", (long)_settings.locationServiceType);
     }
     
 }
@@ -115,6 +141,75 @@
         [self _startManager];
         return _signal;
     }
+}
+
+- (RACSignal *)regionEvents {
+    @synchronized(self) {
+        if (_signal)
+            return _signal;
+        
+        self.signal = [RACSignal merge:@[
+                                         [[self rac_signalForSelector:@selector(locationManager:didEnterRegion:)
+                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                                reduceEach:^id(id _, CLRegion *region) {
+                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionEnter
+                                                                                      forRegion:[region copy]];
+                                                }],
+                                         [[self rac_signalForSelector:@selector(locationManager:didExitRegion:)
+                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                                reduceEach:^id(id _, CLRegion *region) {
+                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionExit
+                                                                                      forRegion:[region copy]];
+                                                }],
+                                         [[self rac_signalForSelector:@selector(locationManager:didDetermineState:forRegion:)
+                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                                reduceEach:^id(id _, id state, CLRegion *region) {
+                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStateDetermined
+                                                                                          state:[state integerValue]
+                                                                                      forRegion:[region copy]];
+                                                }],
+                                         [[self rac_signalForSelector:@selector(locationManager:monitoringDidFailForRegion:withError:)
+                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                                reduceEach:^id(id _, CLRegion *region, NSError *error) {
+                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionFailedMonitoring
+                                                                                          error:error
+                                                                                      forRegion:[region copy]];
+                                                }],
+                                         [[self rac_signalForSelector:@selector(locationManager:didStartMonitoringForRegion:)
+                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                                reduceEach:^id(id _, CLRegion *region) {
+                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStartMonitoring
+                                                                                      forRegion:[region copy]];
+                                                }],
+                                         [[self rac_signalForSelector:@selector(locationManager:didRangeBeacons:inRegion:)
+                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                                reduceEach:^id(id _, NSArray *beacons, CLBeaconRegion *region) {
+                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeBeaconRanged
+                                                                                        beacons:[beacons copy]
+                                                                                      forRegion:[region copy]];
+                                                }],
+                                         [[self rac_signalForSelector:@selector(locationManager:rangingBeaconsDidFailForRegion:withError:)
+                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                                reduceEach:^id(id _, CLBeaconRegion *region, NSError *error) {
+                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeBeaconFailedRanging
+                                                                                          error:error
+                                                                                      forRegion:[region copy]];
+                                                }]
+                                         ]];
+        
+        [self _startManager];
+        return _signal;
+    }
+}
+
+- (RACSignal *)regionStates {
+    return [[self rac_signalForSelector:@selector(locationManager:didDetermineState:forRegion:)
+                           fromProtocol:@protocol(CLLocationManagerDelegate)]
+                  reduceEach:^id(id _, id state, CLRegion *region) {
+                      return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStateDetermined
+                                                            state:[state integerValue]
+                                                        forRegion:[region copy]];
+                  }];
 }
 
 - (RACSignal *)errors {
@@ -169,12 +264,12 @@
 
 - (NSString *)key {
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-    if (_settings.requestForAuthOnly) {
+    if (_settings.locationServiceType == MMPLocationServiceTypeAuthOnly) {
         return [NSString stringWithFormat:@"rfauth~%ld", _settings.authorizationType];
     } else {
 #endif
         return [NSString stringWithFormat:@"%ld~%d~%.5f~%.5f~%ld",
-                _settings.updateType,
+                _settings.locationServiceType,
                 _settings.pausesLocationUpdatesAutomatically,
                 _settings.distanceFilter,
                 _settings.desiredAccuracy,
@@ -201,16 +296,16 @@
 - (void)defaultSettings {
     self.settings = [MMPLocationManagerSettings new];
     
-    _settings.updateType = MMPLocationUpdateTypeUnknown;
+    _settings.locationServiceType = MMPLocationServiceTypeUnknown;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
     _settings.authorizationType = MMPLocationAuthorizationTypeWhenInUse;
-    _settings.requestForAuthOnly = NO;
 #endif
     
     _settings.pausesLocationUpdatesAutomatically = YES;
     _settings.distanceFilter = kCLDistanceFilterNone;
     _settings.desiredAccuracy = kCLLocationAccuracyBest;
     _settings.activityType = CLActivityTypeOther;
+    _settings.regions = [NSMutableArray array];
 }
 
 - (instancetype)pauseLocationUpdatesAutomatically {
@@ -235,6 +330,11 @@
 
 - (instancetype)activityType:(CLActivityType)activityType {
     _settings.activityType = activityType;
+    return self;
+}
+
+- (instancetype)region:(CLRegion *)region {
+    [_settings.regions addObject:region];
     return self;
 }
 
@@ -286,24 +386,27 @@
             return signalBlock();
         }
     }
+    // TODO: probably should send error to errors signal
     NSLog(@"[ERROR] The builder has been finalized, one of the terminal functions has been called.");
     return nil;
 }
 
 - (void)_prepareSignificantChange {
-    _settings.updateType = MMPLocationUpdateTypeSignificantChange;
+    _settings.locationServiceType = MMPLocationServiceTypeSignificantChange;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
     // significant location changes requires "Always"
     if (_settings.authorizationType != MMPLocationAuthorizationTypeAlways) {
-        MMPRxCL_LOG(@"[INFO] Significant location changes requires \"Always\" authorization, automatically change the authorization type.")
+        MMPRxCL_LOG(@"[INFO] Significant location changes requires \"Always\" authorization, forcing \"Always\" authorization type.")
         _settings.authorizationType = MMPLocationAuthorizationTypeAlways;
     }
+#endif
 }
 
 #pragma mark - MMPReactiveCoreLocation: signals implementation
 
 - (RACSignal *)locations {
     return [self _terminal:^RACSignal *{
-        _settings.updateType = MMPLocationUpdateTypeStandard;
+        _settings.locationServiceType = MMPLocationServiceTypeLocation;
         MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
         return [resource locations];
     }];
@@ -311,7 +414,7 @@
 
 - (RACSignal *)location {
     return [self _terminal:^RACSignal *{
-        _settings.updateType = MMPLocationUpdateTypeStandard;
+        _settings.locationServiceType = MMPLocationServiceTypeLocation;
         return [self _location];
     }];
 }
@@ -331,6 +434,33 @@
     }];
 }
 
+- (RACSignal *)regionStates {
+    MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+    return [resource regionStates];
+}
+
+- (RACSignal *)regionEvents {
+    
+    if (![_settings.regions count]) {
+        // TODO: probably should send error to errors signal
+        NSLog(@"[ERROR] no region specified.");
+        return nil;
+    }
+    
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    if (_settings.authorizationType != MMPLocationAuthorizationTypeAlways) {
+        MMPRxCL_LOG(@"[INFO] Significant location changes requires \"Always\" authorization, forcing \"Always\" authorization type.")
+        _settings.authorizationType = MMPLocationAuthorizationTypeAlways;
+    }
+#endif
+    
+    return [self _terminal:^RACSignal *{
+        _settings.locationServiceType = MMPLocationServiceTypeRegionMonitoring;
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+        return [resource regionEvents];
+    }];
+}
+
 - (RACSignal *)errors {
     MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
     return [resource errors];
@@ -344,7 +474,7 @@
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
 - (RACSignal *)authorize {
     return [self _terminal:^RACSignal *{
-        _settings.requestForAuthOnly = YES;
+        _settings.locationServiceType = MMPLocationServiceTypeAuthOnly;
         MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
         return [resource authorize];
     }];

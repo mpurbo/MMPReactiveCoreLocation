@@ -2,7 +2,7 @@
 //  MMPReactiveCoreLocation.h
 //
 //  The MIT License (MIT)
-//  Copyright (c) 2014 Mamad Purbo, purbo.org
+//  Copyright (c) 2014-2015 Mamad Purbo, purbo.org
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -30,21 +30,46 @@
 
 + (instancetype)service;
 
+// =============================================================================
+// Settings
+// =============================================================================
+
 - (instancetype)pauseLocationUpdatesAutomatically;
 - (instancetype)pauseLocationUpdatesManually;
 - (instancetype)distanceFilter:(CLLocationDistance)distanceFilter;
 - (instancetype)desiredAccuracy:(CLLocationAccuracy)desiredAccuracy;
 - (instancetype)activityType:(CLActivityType)activityType;
+// TODO: implement these settings?
+/*
+- (instancetype)locationAgeLimit:(NSTimeInterval)locationAgeLimit;
+- (instancetype)timeout:(NSTimeInterval)timeout;
+*/
+- (instancetype)region:(CLRegion *)region;
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
 - (instancetype)authorizeAlways;
 - (instancetype)authorizeWhenInUse;
 #endif
 
+// =============================================================================
+// Location signals
+// =============================================================================
+
 - (RACSignal *)locations;
 - (RACSignal *)location;
 - (RACSignal *)significantLocationChanges;
 - (RACSignal *)significantLocationChange;
+
+// =============================================================================
+// Region monitoring signals
+// =============================================================================
+
+- (RACSignal *)regionStates;
+- (RACSignal *)regionEvents;
+
+// =============================================================================
+// General signals
+// =============================================================================
 
 - (RACSignal *)errors;
 - (RACSignal *)authorizationStatus;

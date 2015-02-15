@@ -11,7 +11,7 @@
 
 @interface MMPRegionsViewController ()
 
-@property (nonatomic, strong) RACSubject *regionMonitoringDoneSubject;
+@property (nonatomic, strong) MMPReactiveCoreLocation *service;
 
 @end
 
@@ -27,37 +27,22 @@
 
 - (IBAction)regionMonitoringButtonTouchUpInside:(id)sender {
     
-    if (!_regionMonitoringDoneSubject) {
+    if (!_service) {
         
-        self.regionMonitoringDoneSubject = [RACSubject subject];
+        self.service = [MMPReactiveCoreLocation service];
         
-        MMPLocationManager *service = [MMPLocationManager new];
-        
-        CLRegion *region = [[CLCircularRegion alloc] initWithCenter:CLLocationCoordinate2DMake(40.733604, -73.992110)
+        // somewhere in Tokyo
+        [[[_service region:[[CLCircularRegion alloc] initWithCenter:CLLocationCoordinate2DMake(35.702069, 139.775327)
                                                              radius:100.0
-                                                         identifier:@"Test-Region"];
-        
-        [[[[service stop:_regionMonitoringDoneSubject]
-                    region:region]
+                                                         identifier:@"Test-Region"]]
                     regionEvents]
                     subscribeNext:^(MMPRegionEvent *regionEvent) {
                         NSLog(@"[INFO] received event: %ld for region: %@", regionEvent.type, regionEvent.region.identifier);
-                    }
-                    completed:^{
-                        self.regionMonitoringDoneSubject = nil;
                     }];
         
-        [[service errors] subscribeNext:^(NSError *error) {
-            NSLog(@"[ERROR] Location service error: %@", error);
-        }];
-        
-        [_regionMonitoringButton setTitle:@"Stop location signal" forState:UIControlStateNormal];
-        
+        [_regionMonitoringButton setTitle:@"Stop monitoring region" forState:UIControlStateNormal];
     } else {
-        
-        [_regionMonitoringDoneSubject sendCompleted];
-        [_regionMonitoringButton setTitle:@"Start location signal" forState:UIControlStateNormal];
-        
+        [_regionMonitoringButton setTitle:@"Start monitoring region" forState:UIControlStateNormal];
     }
     
 }
