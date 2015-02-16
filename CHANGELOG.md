@@ -1,5 +1,9 @@
 # MMPReactiveCoreLocation CHANGELOG
 
+## 0.6.0
+
+* Complete library design overhaul, simpler functions, intelligent resource management. **Incompatible** with previous versions.
+
 ## 0.5.2
 
 * Fix: region monitoring didn't work.
