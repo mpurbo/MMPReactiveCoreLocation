@@ -35,6 +35,10 @@
 
 - (IBAction)locationButtonTouchUpInside:(id)sender {
     
+    [[[MMPReactiveCoreLocation service] locations] subscribeNext:^(CLLocation *location) {
+        NSLog(@"[INFO] received location: %@", location);
+    }];
+    
     if (!_locationService) {
         
         self.locationService = [MMPReactiveCoreLocation service];

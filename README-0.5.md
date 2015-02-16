@@ -6,18 +6,19 @@
 MMPReactiveCoreLocation is a reactive library for using CoreLocation and iBeacon with ReactiveCocoa. 
 
 **Important Notes:**  
-* Version 0.6 has been redesigned and rewritten from scratch and is *not compatible* with previous versions. Documentation for version 0.5.\* is still available [here](README-0.5.md), 0.4.\* is [here](README-0.4.md).
+* I'm currently working on a new branch `exp` that will become the base for future versions (0.6~) and *will not be* backward compatible. There is a reason why I kept the version to be 0.x: I'm still experimenting and trying to find the best signal design for CoreLocation. The plan is to finalize the library design by 0.6.x and make it relatively stable. Version 0.6 will introduce simpler functions, safer signals, and smarter resource management.
+* Version 0.5 has been redesigned and rewritten from scratch and is *incompatible* with version 0.4.\*. Documentation for version 0.4.\* is still available [here](README-0.4.md).
 
 Features:
-* Globally accessible signals with intelligent resource management for automatically starting and stopping underlying location manager's services.
-* No more delegates, all CLLocationManager's functionalities are available as signals.
+* No more of that pesky delegates, all CLLocationManager's functionalities are available as signals.
 * Signals for location-related updates, including one-time location query.
 * Signals for region monitoring updates, including iBeacon monitoring and ranging.
 * Signals for iOS 8 visit monitoring.
 * Signals for location manager status updates and errors.
 * Supports iOS 8 "Always" and "WhenInUse" authorization.
+* CLLocationManager automatically started and stopped when the signal is subscribed or stopped.
 
-Although most of the CoreLocation services are implemented, some are not tested and should be considered as alpha quality. Features documented here are tested and should work:
+Although most CoreLocation services are implemented, many are not tested and should be considered as alpha quality. Features documented here are tested and should work:
 
 1. [Location subscription](#location-subscription)
 1. [Significant changes subscription](#significant-changes-subscription)
@@ -43,8 +44,8 @@ The easiest way to subscribe to a location stream with [sensible default setting
 // import the header
 #import <MMPReactiveCoreLocation/MMPReactiveCoreLocation.h>
 
-// build service, subscribe to 'locations' signal
-[[[MMPReactiveCoreLocation service] locations] subscribeNext:^(CLLocation *location) {
+// create MMPLocationManager, subscribe to 'locations' signal
+[[[MMPLocationManager new] locations] subscribeNext:^(CLLocation *location) {
     NSLog(@"[INFO] received location: %@", location);
 }];
 ```
@@ -52,7 +53,7 @@ The easiest way to subscribe to a location stream with [sensible default setting
 If you don't need a constant stream of location updates, you can use `location` (note the lack of plural `s`) to get the latest location once and the library will automatically stop CLLocationManager and cleanup resources:
 ```objc
 // one-time location
-[[[MMPReactiveCoreLocation service] location] subscribeNext:^(CLLocation *location) {
+[[[MMPLocationManager new] location] subscribeNext:^(CLLocation *location) {
     NSLog(@"[INFO] received location: %@", location);
 }];
 ```
@@ -61,8 +62,8 @@ If you don't need a constant stream of location updates, you can use `location` 
 
 For significant change updates, use `significantLocationChanges` signal instead:
 ```objc
-// build service, subscribe to 'significantLocationChanges' signal
-[[[MMPReactiveCoreLocation service] significantLocationChanges] subscribeNext:^(CLLocation *location) {
+// create MMPLocationManager, subscribe to 'significantLocationChanges' signal
+[[[MMPLocationManager new] significantLocationChanges] subscribeNext:^(CLLocation *location) {
     NSLog(@"[INFO] received location: %@", location);
 }];
 ```
@@ -72,28 +73,45 @@ Just as `locations` for constant updates and `location` for single update, use `
 
 For region monitoring, use `region` for adding region to monitor, and `regionEvents` to get the signal:
 ```objc
-// build service, add 2 regions to monitor, subscribe to region events
-[[[[[MMPReactiveCoreLocation service] 
-                             region:region1] 
-                             region:region2] 
-                             regionEvents] 
-                             subscribeNext:^(MMPRegionEvent *regionEvent) {
-                                 NSLog(@"[INFO] received event: %ld for region: %@", regionEvent.type, regionEvent.region.identifier);
-                             }];
+[[[[MMPLocationManager new] region:region]
+                            regionEvents]
+                            subscribeNext:^(MMPRegionEvent *regionEvent) {
+                                NSLog(@"[INFO] received event: %ld for region: %@", regionEvent.type, regionEvent.region.identifier);
+                            }];
 ```
 You can also call `region` method multiple times to define multiple regions to monitor. See `MMPRegionEventType` for more details on what region events are available.
 
 ### Stopping Subscription
 
-To stop any signals and automatically cleanup the underlying location manager and requests, simply use the `stop` method:
+To stop any signals and automatically cleanup the underlying location manager and requests, use `stop` method to specify a signal that would send a 'stop' notification when it is completed. For example, following code shows how to stop a location subscription using a subject:
 ```objc
-self.service = [MMPReactiveCoreLocation service];
+// doneSubject is the subject that will be used to control location subscription stoppage
+self.doneSubject = [RACSubject subject];
 
-// use 'stop' to tell the service that it should stop the subscription. Underlying location manager (CLLocationManager) 
-// will automatically be stopped and cleaned up if there are no other subscriber.
-[self.service stop];
+MMPLocationManager *service = [MMPLocationManager new];
+// use 'stop' to tell the service that it should stop when doneSubject is completed
+[[[[service stop:self.doneSubject]
+            locations]
+            subscribeOn:[RACScheduler mainThreadScheduler]]
+            subscribeNext:^(CLLocation *location) {
+                
+                NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
+                                       location.coordinate.latitude,
+                                       location.coordinate.longitude,
+                                       location.horizontalAccuracy];
+                NSLog(@"[INFO] received location: %@", locString);
+                self.locationLabel.text = locString;
+                
+            }
+            completed:^{
+                // by this time, the underlying CLLocationManager's service should be stopped and cleaned up.
+                // we can clean the subject here because it's should be completed already
+                self.doneSubject = nil;
+            }];
+
+// ... somewhere else when we want the service to stop
+[self.doneSubject sendCompleted];
 ```
-Note that if there are multiple subscribers to signals that use shared underlying location manager (i.e. services built and configured with exactly the same settings), stopping one subscriber may not necessarily stopped the location manager.
 
 ### Setting Location Manager
 
@@ -112,7 +130,7 @@ If you need other than default settings, then you chain-call following methods t
 
 Here's a sample code on how to customize location manager settings before subscribing to a signal:
 ```objc
-MMPReactiveCoreLocation *service = [MMPReactiveCoreLocation service];
+MMPLocationManager *service = [MMPLocationManager new];
 
 RACSignal *locations = [[[[service distanceFilter:kCLDistanceFilterNone]
                                    desiredAccuracy:kCLLocationAccuracyBestForNavigation]
@@ -173,23 +191,26 @@ When you need to send request for authorization manually, for example when using
 
 self.locationManagerForAuth = [MMPLocationManager new];
 
-[[[[MMPReactiveCoreLocation service]
-                            authorizeAlways]
-                            requestAuthorization]
-                            subscribeNext:^(NSNumber *statusNumber) {      
-                                CLAuthorizationStatus status = [statusNumber intValue];
-                                switch (status) {
-                                    case kCLAuthorizationStatusAuthorizedAlways:
-                                    case kCLAuthorizationStatusAuthorizedWhenInUse:
-                                        _mapView.showsUserLocation = YES;
-                                        break;
-                                    case kCLAuthorizationStatusAuthorized:
-                                        _mapView.showsUserLocation = YES;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }];
+[[[self.locationManagerForAuth
+   authorizeAlways]
+   requestAuthorization]
+   subscribeNext:^(NSNumber *statusNumber) {      
+       CLAuthorizationStatus status = [statusNumber intValue];
+       switch (status) {
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+           case kCLAuthorizationStatusAuthorizedAlways:
+           case kCLAuthorizationStatusAuthorizedWhenInUse:
+               _mapView.showsUserLocation = YES;
+               break;
+#else
+           case kCLAuthorizationStatusAuthorized:
+               _mapView.showsUserLocation = YES;
+               break;
+#endif
+           default:
+               break;
+       }
+   }];
 ```
 
 ## Roadmap
@@ -198,6 +219,7 @@ Most of the CLLocationManager functionalities including iBeacon, visit monitorin
 
 I will write more usage samples and documentation as I fix bugs and write tests. In the meantime, if you have any question on how to apply certain CLLocationManager usage pattern using this library, please feel free to contact me or open issues.
 
+* 0.6: Refactors with simpler functions, safer signals, and smarter resource management.
 * 0.7: CoreBluetooth integration for iBeacon publishing.
 * 0.8: Unit tests and documentations.
 
