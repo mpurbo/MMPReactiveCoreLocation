@@ -37,6 +37,7 @@
 + (instancetype)instance;
 
 - (id<MMPResource>)getResourceWithHelper:(id<MMPResourceLifecycleHelper>)resourceHelper;
+- (id<MMPResource>)retainResourceWithHelper:(id<MMPResourceLifecycleHelper>)resourceHelper;
 - (NSUInteger)releaseResourceWithHelper:(id<MMPResourceLifecycleHelper>)resourceHelper;
 
 @end

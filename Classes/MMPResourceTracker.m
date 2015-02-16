@@ -75,6 +75,28 @@
 - (id<MMPResource>)getResourceWithHelper:(id<MMPResourceLifecycleHelper>)resourceHelper {
     
     NSString *key = [resourceHelper key];
+    if (!key) {
+        return nil;
+    }
+    
+    __block id<MMPResource> resource = nil;
+    
+    dispatch_sync(_queue, ^{
+        MMPTrackableResource *trackableResource = [_cache objectForKey:key];
+        if (trackableResource) {
+            resource = trackableResource.resource;
+        }
+    });
+    
+    return resource;
+}
+
+- (id<MMPResource>)retainResourceWithHelper:(id<MMPResourceLifecycleHelper>)resourceHelper {
+    
+    NSString *key = [resourceHelper key];
+    if (!key) {
+        return nil;
+    }
     
     __block id<MMPResource> resource;
     
@@ -98,6 +120,10 @@
 - (NSUInteger)releaseResourceWithHelper:(id<MMPResourceLifecycleHelper>)resourceHelper {
     
     NSString *key = [resourceHelper key];
+    if (!key) {
+        return 0;
+    }
+    
     __block NSUInteger refCount = 0;
     
     dispatch_barrier_sync(_queue, ^{

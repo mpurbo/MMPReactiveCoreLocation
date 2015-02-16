@@ -42,6 +42,8 @@
         
         [_regionMonitoringButton setTitle:@"Stop monitoring region" forState:UIControlStateNormal];
     } else {
+        [_service stop];
+        self.service = nil;
         [_regionMonitoringButton setTitle:@"Start monitoring region" forState:UIControlStateNormal];
     }
     

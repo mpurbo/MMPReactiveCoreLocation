@@ -45,7 +45,9 @@
 - (instancetype)timeout:(NSTimeInterval)timeout;
 */
 - (instancetype)region:(CLRegion *)region;
-
+- (instancetype)headingFilter:(CLLocationDegrees)headingFilter;
+- (instancetype)headingOrientation:(CLDeviceOrientation)headingOrientation;
+- (instancetype)shouldDisplayHeadingCalibration:(BOOL(^)(CLLocationManager *))block;
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
 - (instancetype)authorizeAlways;
 - (instancetype)authorizeWhenInUse;
@@ -66,6 +68,20 @@
 
 - (RACSignal *)regionStates;
 - (RACSignal *)regionEvents;
+
+// =============================================================================
+// Heading update signals
+// =============================================================================
+
+- (RACSignal *)headingUpdates;
+
+// =============================================================================
+// Visit monitoring signals
+// =============================================================================
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+- (RACSignal *)visits;
+#endif
 
 // =============================================================================
 // General signals

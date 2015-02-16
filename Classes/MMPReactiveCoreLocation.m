@@ -20,7 +20,9 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     MMPLocationServiceTypeAuthOnly,
     MMPLocationServiceTypeLocation,
     MMPLocationServiceTypeSignificantChange,
-    MMPLocationServiceTypeRegionMonitoring
+    MMPLocationServiceTypeRegionMonitoring,
+    MMPLocationServiceTypeHeadingUpdate,
+    MMPLocationServiceTypeVisitMonitoring
 };
 
 @interface MMPLocationManagerSettings : NSObject
@@ -36,6 +38,10 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 @property(assign, nonatomic) CLLocationAccuracy desiredAccuracy;
 @property(assign, nonatomic) CLActivityType activityType;
 @property(strong, nonatomic) NSMutableArray *regions;
+
+@property(assign, nonatomic) CLLocationDegrees headingFilter;
+@property(assign, nonatomic) CLDeviceOrientation headingOrientation;
+@property(copy) BOOL(^shouldDisplayHeadingCalibrationBlock)(CLLocationManager *);
 
 @end
 
@@ -68,22 +74,38 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 }
 
 - (void)stop {
-    if (_settings.locationServiceType == MMPLocationServiceTypeLocation) {
-        [_manager stopUpdatingLocation];
-        MMPRxCL_LOG(@"[INFO] Location manager stopped updating location");
-    } else if (_settings.locationServiceType == MMPLocationServiceTypeSignificantChange) {
-        [_manager stopMonitoringSignificantLocationChanges];
-        MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring significant location change");
-    } else if (_settings.locationServiceType == MMPLocationServiceTypeRegionMonitoring) {
-        for (CLRegion *region in _settings.regions) {
-            [_manager stopMonitoringForRegion:region];
-        }
+    switch (_settings.locationServiceType) {
+        case MMPLocationServiceTypeLocation:
+            [_manager stopUpdatingLocation];
+            MMPRxCL_LOG(@"[INFO] Location manager stopped updating location");
+            break;
+        case MMPLocationServiceTypeSignificantChange:
+            [_manager stopMonitoringSignificantLocationChanges];
+            MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring significant location change");
+            break;
+        case MMPLocationServiceTypeRegionMonitoring:
+            for (CLRegion *region in _settings.regions) {
+                [_manager stopMonitoringForRegion:region];
+            }
+            MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring regions")
+            break;
+        case MMPLocationServiceTypeHeadingUpdate:
+            [_manager stopUpdatingHeading];
+            MMPRxCL_LOG(@"[INFO] Location manager stopped updating heading")
+            break;
+        case MMPLocationServiceTypeVisitMonitoring:
+            [_manager stopMonitoringVisits];
+            MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring visits")
+            break;
+        default:
+            NSLog(@"[WARN] Unknown location update type: %ld, not starting anything.", (long)_settings.locationServiceType);
+            break;
     }
+    
 }
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-- (void)_authorize:(CLLocationManager *)locationManager with:(MMPLocationAuthorizationType)authorizationType
-{
+- (void)_authorize:(CLLocationManager *)locationManager with:(MMPLocationAuthorizationType)authorizationType {
     if (authorizationType == MMPLocationAuthorizationTypeAlways) {
         if ([locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
             [locationManager requestAlwaysAuthorization];
@@ -96,36 +118,53 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 }
 #endif
 
+- (CLLocationManager *)_setupManagerForLocation {
+    _manager.pausesLocationUpdatesAutomatically = _settings.pausesLocationUpdatesAutomatically;
+    _manager.distanceFilter = _settings.distanceFilter;
+    _manager.desiredAccuracy = _settings.desiredAccuracy;
+    _manager.activityType = _settings.activityType;
+    return _manager;
+}
+
+- (CLLocationManager *)_setupManagerForHeadingUpdate {
+    _manager.headingFilter = _settings.headingFilter;
+    _manager.headingOrientation = _settings.headingOrientation;
+    return _manager;
+}
+
 - (void)_startManager {
-    
-    if (_settings.locationServiceType == MMPLocationServiceTypeLocation ||
-        _settings.locationServiceType == MMPLocationServiceTypeSignificantChange) {
-        
-        _manager.pausesLocationUpdatesAutomatically = _settings.pausesLocationUpdatesAutomatically;
-        _manager.distanceFilter = _settings.distanceFilter;
-        _manager.desiredAccuracy = _settings.desiredAccuracy;
-        _manager.activityType = _settings.activityType;
-    }
     
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
     [self _authorize:_manager with:_settings.authorizationType];
 #endif
     
-    if (_settings.locationServiceType == MMPLocationServiceTypeLocation) {
-        [_manager startUpdatingLocation];
-        MMPRxCL_LOG(@"[INFO] Location manager started updating location")
-    } else if (_settings.locationServiceType == MMPLocationServiceTypeSignificantChange) {
-        [_manager startMonitoringSignificantLocationChanges];
-        MMPRxCL_LOG(@"[INFO] Location manager started monitoring significant location change")
-    } else if (_settings.locationServiceType == MMPLocationServiceTypeRegionMonitoring) {
-        for (CLRegion *region in _settings.regions) {
-            [_manager startMonitoringForRegion:region];
-        }
-        MMPRxCL_LOG(@"[INFO] Location manager started monitoring regions")
-    } else {
-        NSLog(@"[WARN] Unknown location update type: %ld, not starting anything.", (long)_settings.locationServiceType);
+    switch (_settings.locationServiceType) {
+        case MMPLocationServiceTypeLocation:
+            [[self _setupManagerForLocation] startUpdatingLocation];
+            MMPRxCL_LOG(@"[INFO] Location manager started updating location")
+            break;
+        case MMPLocationServiceTypeSignificantChange:
+            [[self _setupManagerForLocation] startMonitoringSignificantLocationChanges];
+            MMPRxCL_LOG(@"[INFO] Location manager started monitoring significant location change")
+            break;
+        case MMPLocationServiceTypeRegionMonitoring:
+            for (CLRegion *region in _settings.regions) {
+                [_manager startMonitoringForRegion:region];
+            }
+            MMPRxCL_LOG(@"[INFO] Location manager started monitoring regions")
+            break;
+        case MMPLocationServiceTypeHeadingUpdate:
+            [[self _setupManagerForHeadingUpdate] startUpdatingHeading];
+            MMPRxCL_LOG(@"[INFO] Location manager started updating heading")
+            break;
+        case MMPLocationServiceTypeVisitMonitoring:
+            [_manager startMonitoringVisits];
+            MMPRxCL_LOG(@"[INFO] Location manager started monitoring visits")
+            break;
+        default:
+            NSLog(@"[WARN] Unknown location update type: %ld, not starting anything.", (long)_settings.locationServiceType);
+            break;
     }
-    
 }
 
 - (RACSignal *)locations {
@@ -202,6 +241,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     }
 }
 
+
 - (RACSignal *)regionStates {
     return [[self rac_signalForSelector:@selector(locationManager:didDetermineState:forRegion:)
                            fromProtocol:@protocol(CLLocationManagerDelegate)]
@@ -211,6 +251,24 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
                                                         forRegion:[region copy]];
                   }];
 }
+
+- (RACSignal *)headingUpdates {
+    return [[self rac_signalForSelector:@selector(locationManager:didUpdateHeading:)
+                           fromProtocol:@protocol(CLLocationManagerDelegate)]
+                  reduceEach:^id(id _, id state, CLHeading *newHeading) {
+                      return [newHeading copy];
+                  }];
+}
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+- (RACSignal *)visits {
+    return [[self rac_signalForSelector:@selector(locationManager:didVisit:)
+                           fromProtocol:@protocol(CLLocationManagerDelegate)]
+                  reduceEach:^id(id _, id state, CLVisit *visit) {
+                      return [visit copy];
+                  }];
+}
+#endif
 
 - (RACSignal *)errors {
     return [[[[self rac_signalForSelector:@selector(locationManager:didFailWithError:)
@@ -241,11 +299,21 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 }
 #endif
 
+#pragma mark - CLLocationManagerDelegate implementation
+
+- (BOOL)locationManagerShouldDisplayHeadingCalibration:(CLLocationManager *)manager {
+    if (_settings.shouldDisplayHeadingCalibrationBlock) {
+        return _settings.shouldDisplayHeadingCalibrationBlock(manager);
+    }
+    return NO;
+}
+
 @end
 
 @interface MMPReactiveCoreLocation()
 
 @property (nonatomic, strong) MMPLocationManagerSettings *settings;
+@property (nonatomic, strong) NSString *cachedKey;
 @property (nonatomic, assign) BOOL finalized; // updated within @synchonized, so no need to make it atomic here
 
 @end
@@ -256,6 +324,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     if (self = [super init]) {
         [self defaultSettings];
         self.finalized = NO;
+        self.cachedKey = nil;
     }
     return self;
 }
@@ -263,20 +332,47 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 #pragma mark - MMPResourceLifecycleHelper implementation
 
 - (NSString *)key {
+    @synchronized(self) {
+        if (!_cachedKey) {
+            switch (_settings.locationServiceType) {
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-    if (_settings.locationServiceType == MMPLocationServiceTypeAuthOnly) {
-        return [NSString stringWithFormat:@"rfauth~%ld", _settings.authorizationType];
-    } else {
+                case MMPLocationServiceTypeAuthOnly:
+                    self.cachedKey = [NSString stringWithFormat:@"rfauth~%ld", _settings.authorizationType];
+                    break;
 #endif
-        return [NSString stringWithFormat:@"%ld~%d~%.5f~%.5f~%ld",
-                _settings.locationServiceType,
-                _settings.pausesLocationUpdatesAutomatically,
-                _settings.distanceFilter,
-                _settings.desiredAccuracy,
-                _settings.activityType];
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+                case MMPLocationServiceTypeLocation:
+                case MMPLocationServiceTypeSignificantChange:
+                    self.cachedKey = [NSString stringWithFormat:@"loc~%ld~%d~%.5f~%.5f~%ld",
+                            _settings.locationServiceType,
+                            _settings.pausesLocationUpdatesAutomatically,
+                            _settings.distanceFilter,
+                            _settings.desiredAccuracy,
+                            _settings.activityType];
+                    break;
+                case MMPLocationServiceTypeRegionMonitoring:
+                    self.cachedKey = [NSString stringWithFormat:@"regmon~%@", [[NSUUID UUID] UUIDString]];
+                    break;
+                case MMPLocationServiceTypeHeadingUpdate:
+                    if (_settings.shouldDisplayHeadingCalibrationBlock) {
+                        // block is defined, generate unique ID
+                        self.cachedKey = [NSString stringWithFormat:@"hdup~%@", [[NSUUID UUID] UUIDString]];
+                    } else {
+                        self.cachedKey = [NSString stringWithFormat:@"hdup~%.5f~%d",
+                                _settings.headingFilter,
+                                (int)_settings.headingOrientation];
+                    }
+                    break;
+                case MMPLocationServiceTypeVisitMonitoring:
+                    self.cachedKey = @"vismon";
+                    break;
+                default:
+                    // shouldn't happen
+                    NSLog(@"[ERROR] Unexpected location service type: %ld", _settings.locationServiceType);
+                    break;
+            }
+        }
     }
-#endif
+    return _cachedKey;
 }
 
 - (id<MMPResource>)createResource {
@@ -306,6 +402,10 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     _settings.desiredAccuracy = kCLLocationAccuracyBest;
     _settings.activityType = CLActivityTypeOther;
     _settings.regions = [NSMutableArray array];
+    
+    _settings.headingFilter = 1;
+    _settings.headingOrientation = CLDeviceOrientationUnknown;
+    _settings.shouldDisplayHeadingCalibrationBlock = nil;
 }
 
 - (instancetype)pauseLocationUpdatesAutomatically {
@@ -338,6 +438,21 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     return self;
 }
 
+- (instancetype)headingFilter:(CLLocationDegrees)headingFilter {
+    _settings.headingFilter = headingFilter;
+    return self;
+}
+
+- (instancetype)headingOrientation:(CLDeviceOrientation)headingOrientation {
+    _settings.headingOrientation = headingOrientation;
+    return self;
+}
+
+- (instancetype)shouldDisplayHeadingCalibration:(BOOL(^)(CLLocationManager *))block {
+    _settings.shouldDisplayHeadingCalibrationBlock = [block copy];
+    return self;
+}
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
 - (instancetype)authorizeAlways {
     _settings.authorizationType = MMPLocationAuthorizationTypeAlways;
@@ -359,7 +474,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
  *  @return Signal with 1 location event
  */
 - (RACSignal *)_location {
-    MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+    MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
     return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
         [[[resource locations]
                     take:1]
@@ -407,7 +522,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 - (RACSignal *)locations {
     return [self _terminal:^RACSignal *{
         _settings.locationServiceType = MMPLocationServiceTypeLocation;
-        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
         return [resource locations];
     }];
 }
@@ -422,7 +537,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 - (RACSignal *)significantLocationChanges {
     return [self _terminal:^RACSignal *{
         [self _prepareSignificantChange];
-        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
         return [resource locations];
     }];
 }
@@ -456,10 +571,34 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     
     return [self _terminal:^RACSignal *{
         _settings.locationServiceType = MMPLocationServiceTypeRegionMonitoring;
-        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
         return [resource regionEvents];
     }];
 }
+
+- (RACSignal *)headingUpdates {
+    return [self _terminal:^RACSignal *{
+        _settings.locationServiceType = MMPLocationServiceTypeHeadingUpdate;
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
+        return [resource headingUpdates];
+    }];
+}
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+- (RACSignal *)visits {
+    
+    if (_settings.authorizationType != MMPLocationAuthorizationTypeAlways) {
+        MMPRxCL_LOG(@"[INFO] Significant location changes requires \"Always\" authorization, forcing \"Always\" authorization type.")
+        _settings.authorizationType = MMPLocationAuthorizationTypeAlways;
+    }
+    
+    return [self _terminal:^RACSignal *{
+        _settings.locationServiceType = MMPLocationServiceTypeVisitMonitoring;
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
+        return [resource visits];
+    }];
+}
+#endif
 
 - (RACSignal *)errors {
     MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
@@ -475,7 +614,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 - (RACSignal *)authorize {
     return [self _terminal:^RACSignal *{
         _settings.locationServiceType = MMPLocationServiceTypeAuthOnly;
-        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
         return [resource authorize];
     }];
 }

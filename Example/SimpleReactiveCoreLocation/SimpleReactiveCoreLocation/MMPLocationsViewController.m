@@ -39,6 +39,18 @@
         
         self.locationService = [MMPReactiveCoreLocation service];
         
+        // subscribe to locations
+        [[[_locationService locations]
+                            subscribeOn:[RACScheduler mainThreadScheduler]]
+                            subscribeNext:^(CLLocation *location) {
+                                NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
+                                                       location.coordinate.latitude,
+                                                       location.coordinate.longitude,
+                                                       location.horizontalAccuracy];
+                                NSLog(@"[INFO] received location: %@", locString);
+                                self.locationLabel.text = locString;
+                            }];
+        
         // subscribe to authorization status
         [[_locationService authorizationStatus]
                            subscribeNext:^(NSNumber *statusNumber) {
@@ -71,21 +83,10 @@
                            }];
         
         // subscribe to errors
-        [[_locationService errors] subscribeNext:^(NSError *error) {
-            NSLog(@"[ERROR] Location service error: %@", error);
-        }];
-        
-        // subscribe to locations
-        [[[_locationService locations]
-                            subscribeOn:[RACScheduler mainThreadScheduler]]
-                            subscribeNext:^(CLLocation *location) {
-                                NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
-                                                       location.coordinate.latitude,
-                                                       location.coordinate.longitude,
-                                                       location.horizontalAccuracy];
-                                NSLog(@"[INFO] received location: %@", locString);
-                                self.locationLabel.text = locString;
-                            }];
+        [[_locationService errors]
+                           subscribeNext:^(NSError *error) {
+                               NSLog(@"[ERROR] Location service error: %@", error);
+                           }];
         
         [_locationButton setTitle:@"Stop location signal" forState:UIControlStateNormal];
     } else {
