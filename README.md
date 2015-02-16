@@ -165,14 +165,6 @@ Please see the header file for more setting possibilities.
 
 When you need to send request for authorization manually, for example when using `MKMapView` and you just need to send the request before setting `showsUserLocation`, you can use `requestAuthorization` method that returns a signal producing status change events (same as `authorizationStatus` signal):
 ```objc
-// you need to have a strong reference to the manager, otherwise the manager
-// will be disposed before you receive authorization.
-@property (nonatomic, strong) MMPLocationManager *locationManagerForAuth;
-
-// .... 
-
-self.locationManagerForAuth = [MMPLocationManager new];
-
 [[[[MMPReactiveCoreLocation service]
                             authorizeAlways]
                             requestAuthorization]
