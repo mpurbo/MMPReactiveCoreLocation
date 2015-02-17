@@ -26,6 +26,12 @@
     
     self.locationService = nil;
     self.significantService = nil;
+    
+    /*
+    [[[MMPReactiveCoreLocation service] locations] subscribeNext:^(CLLocation *location) {
+        NSLog(@"bubu: %f, %f", location.coordinate.latitude, location.coordinate.longitude);
+    }];
+    */
 }
 
 - (void)didReceiveMemoryWarning {
@@ -34,10 +40,6 @@
 }
 
 - (IBAction)locationButtonTouchUpInside:(id)sender {
-    
-    [[[MMPReactiveCoreLocation service] locations] subscribeNext:^(CLLocation *location) {
-        NSLog(@"[INFO] received location: %@", location);
-    }];
     
     if (!_locationService) {
         

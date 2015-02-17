@@ -1,5 +1,9 @@
 # MMPReactiveCoreLocation CHANGELOG
 
+## 0.6.1
+
+* Fix: signals sharing identical settings are not automatically stopped.
+
 ## 0.6.0
 
 * Complete library design overhaul, simpler functions, intelligent resource management. **Incompatible** with previous versions.

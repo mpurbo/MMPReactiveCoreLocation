@@ -315,6 +315,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 @property (nonatomic, strong) MMPLocationManagerSettings *settings;
 @property (nonatomic, strong) NSString *cachedKey;
 @property (nonatomic, assign) BOOL finalized; // updated within @synchonized, so no need to make it atomic here
+@property (nonatomic, strong) RACSubject *stopSubject;
 
 @end
 
@@ -325,6 +326,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
         [self defaultSettings];
         self.finalized = NO;
         self.cachedKey = nil;
+        self.stopSubject = [RACSubject subject];
     }
     return self;
 }
@@ -337,17 +339,17 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
             switch (_settings.locationServiceType) {
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
                 case MMPLocationServiceTypeAuthOnly:
-                    self.cachedKey = [NSString stringWithFormat:@"rfauth~%ld", _settings.authorizationType];
+                    self.cachedKey = [NSString stringWithFormat:@"rfauth~%ld", (long)_settings.authorizationType];
                     break;
 #endif
                 case MMPLocationServiceTypeLocation:
                 case MMPLocationServiceTypeSignificantChange:
                     self.cachedKey = [NSString stringWithFormat:@"loc~%ld~%d~%.5f~%.5f~%ld",
-                            _settings.locationServiceType,
+                            (long)_settings.locationServiceType,
                             _settings.pausesLocationUpdatesAutomatically,
                             _settings.distanceFilter,
                             _settings.desiredAccuracy,
-                            _settings.activityType];
+                            (long)_settings.activityType];
                     break;
                 case MMPLocationServiceTypeRegionMonitoring:
                     self.cachedKey = [NSString stringWithFormat:@"regmon~%@", [[NSUUID UUID] UUIDString]];
@@ -367,7 +369,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
                     break;
                 default:
                     // shouldn't happen
-                    NSLog(@"[ERROR] Unexpected location service type: %ld", _settings.locationServiceType);
+                    NSLog(@"[ERROR] Unexpected location service type: %ld", (long)_settings.locationServiceType);
                     break;
             }
         }
@@ -520,11 +522,11 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 #pragma mark - MMPReactiveCoreLocation: signals implementation
 
 - (RACSignal *)locations {
-    return [self _terminal:^RACSignal *{
+    return [[self _terminal:^RACSignal *{
         _settings.locationServiceType = MMPLocationServiceTypeLocation;
         MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
         return [resource locations];
-    }];
+    }] takeUntil:_stopSubject];
 }
 
 - (RACSignal *)location {
@@ -535,11 +537,11 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 }
 
 - (RACSignal *)significantLocationChanges {
-    return [self _terminal:^RACSignal *{
+    return [[self _terminal:^RACSignal *{
         [self _prepareSignificantChange];
         MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
         return [resource locations];
-    }];
+    }] takeUntil:_stopSubject];
 }
 
 - (RACSignal *)significantLocationChange {
@@ -551,7 +553,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 
 - (RACSignal *)regionStates {
     MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
-    return [resource regionStates];
+    return [[resource regionStates] takeUntil:_stopSubject];
 }
 
 - (RACSignal *)regionEvents {
@@ -572,7 +574,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     return [self _terminal:^RACSignal *{
         _settings.locationServiceType = MMPLocationServiceTypeRegionMonitoring;
         MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
-        return [resource regionEvents];
+        return [[resource regionEvents] takeUntil:_stopSubject];
     }];
 }
 
@@ -580,7 +582,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     return [self _terminal:^RACSignal *{
         _settings.locationServiceType = MMPLocationServiceTypeHeadingUpdate;
         MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
-        return [resource headingUpdates];
+        return [[resource headingUpdates] takeUntil:_stopSubject];
     }];
 }
 
@@ -595,19 +597,19 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     return [self _terminal:^RACSignal *{
         _settings.locationServiceType = MMPLocationServiceTypeVisitMonitoring;
         MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
-        return [resource visits];
+        return [[resource visits] takeUntil:_stopSubject];
     }];
 }
 #endif
 
 - (RACSignal *)errors {
     MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
-    return [resource errors];
+    return [[resource errors] takeUntil:_stopSubject];
 }
 
 - (RACSignal *)authorizationStatus {
     MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
-    return [resource authorizationStatus];
+    return [[resource authorizationStatus] takeUntil:_stopSubject];
 }
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
@@ -615,13 +617,14 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     return [self _terminal:^RACSignal *{
         _settings.locationServiceType = MMPLocationServiceTypeAuthOnly;
         MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
-        return [resource authorize];
+        return [[resource authorize] takeUntil:_stopSubject];
     }];
 }
 #endif
 
 - (void)stop {
     NSUInteger refCount = [[MMPResourceTracker instance] releaseResourceWithHelper:self];
+    [self.stopSubject sendCompleted];
     MMPRxCL_LOG(@"[INFO] Location manager resource released, currently have %lu references", refCount)
 }
 
