@@ -15,12 +15,15 @@
 #   define MMPRxCL_LOG(...)
 #endif
 
+NSString * const MMPLocationErrorDomain = @"MMPLocationErrorDomain";
+
 typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     MMPLocationServiceTypeUnknown = 0,
     MMPLocationServiceTypeAuthOnly,
     MMPLocationServiceTypeLocation,
     MMPLocationServiceTypeSignificantChange,
     MMPLocationServiceTypeRegionMonitoring,
+    MMPLocationServiceTypeBeaconRanging,
     MMPLocationServiceTypeHeadingUpdate,
     MMPLocationServiceTypeVisitMonitoring
 };
@@ -89,6 +92,12 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
             }
             MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring regions")
             break;
+        case MMPLocationServiceTypeBeaconRanging:
+            for (CLBeaconRegion *region in _settings.regions) {
+                [_manager stopRangingBeaconsInRegion:region];
+            }
+            MMPRxCL_LOG(@"[INFO] Location manager stopped ranging beacons")
+            break;
         case MMPLocationServiceTypeHeadingUpdate:
             [_manager stopUpdatingHeading];
             MMPRxCL_LOG(@"[INFO] Location manager stopped updating heading")
@@ -152,6 +161,12 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
                 [_manager startMonitoringForRegion:region];
             }
             MMPRxCL_LOG(@"[INFO] Location manager started monitoring regions")
+            break;
+        case MMPLocationServiceTypeBeaconRanging:
+            for (CLBeaconRegion *region in _settings.regions) {
+                [_manager startRangingBeaconsInRegion:region];
+            }
+            MMPRxCL_LOG(@"[INFO] Location manager started ranging beacons")
             break;
         case MMPLocationServiceTypeHeadingUpdate:
             [[self _setupManagerForHeadingUpdate] startUpdatingHeading];
@@ -219,7 +234,20 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
                                                 reduceEach:^id(id _, CLRegion *region) {
                                                     return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStartMonitoring
                                                                                       forRegion:[region copy]];
-                                                }],
+                                                }]
+                                         ]];
+        
+        [self _startManager];
+        return _signal;
+    }
+}
+
+- (RACSignal *)beaconRanges {
+    @synchronized(self) {
+        if (_signal)
+            return _signal;
+        
+        self.signal = [RACSignal merge:@[
                                          [[self rac_signalForSelector:@selector(locationManager:didRangeBeacons:inRegion:)
                                                          fromProtocol:@protocol(CLLocationManagerDelegate)]
                                                 reduceEach:^id(id _, NSArray *beacons, CLBeaconRegion *region) {
@@ -440,6 +468,11 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     return self;
 }
 
+- (instancetype)beaconRegion:(CLBeaconRegion *)region {
+    [_settings.regions addObject:region];
+    return self;
+}
+
 - (instancetype)headingFilter:(CLLocationDegrees)headingFilter {
     _settings.headingFilter = headingFilter;
     return self;
@@ -578,6 +611,20 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     }];
 }
 
+- (RACSignal *)beaconRanges {
+    if (![_settings.regions count]) {
+        // TODO: probably should send error to errors signal
+        NSLog(@"[ERROR] no region specified.");
+        return nil;
+    }
+    
+    return [self _terminal:^RACSignal *{
+        _settings.locationServiceType = MMPLocationServiceTypeBeaconRanging;
+        MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
+        return [[resource beaconRanges] takeUntil:_stopSubject];
+    }];
+}
+
 - (RACSignal *)headingUpdates {
     return [self _terminal:^RACSignal *{
         _settings.locationServiceType = MMPLocationServiceTypeHeadingUpdate;
@@ -626,6 +673,11 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     NSUInteger refCount = [[MMPResourceTracker instance] releaseResourceWithHelper:self];
     [self.stopSubject sendCompleted];
     MMPRxCL_LOG(@"[INFO] Location manager resource released, currently have %lu references", refCount)
+}
+
+- (CLLocationManager *)locationManager {
+    MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+    return resource.manager;
 }
 
 @end

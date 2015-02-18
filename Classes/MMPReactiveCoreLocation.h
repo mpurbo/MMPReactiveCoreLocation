@@ -23,8 +23,47 @@
 //  THE SOFTWARE.
 //
 
-#import "MMPLocationManager.h"
+#import <Foundation/Foundation.h>
+#import <CoreLocation/CoreLocation.h>
+#import <CoreBluetooth/CoreBluetooth.h>
+#import <ReactiveCocoa/ReactiveCocoa.h>
+#import "MMPRegionEvent.h"
 #import "MMPResourceTracker.h"
+
+#define MMP_LOCATION_AGE_LIMIT_DEFAULT 5.0
+#define MMP_LOCATION_TIMEOUT_DEFAULT -1
+
+/**
+ *  Error domain for errors produced by the library.
+ */
+extern NSString * const MMPLocationErrorDomain;
+
+typedef NS_ENUM(NSInteger, MMPLocationErrorCode) {
+    MMPLocationErrorServiceUnavailable = 1,
+    MMPLocationErrorServiceFailure = 2,
+    MMPLocationErrorServiceAlreadyStarted = 3
+};
+
+typedef NS_ENUM(NSInteger, MMPLocationEventType) {
+    MMPLocationEventTypeUnknown = 0,
+    MMPLocationEventTypePaused,
+    MMPLocationEventTypeResumed
+};
+
+typedef NS_ENUM(NSInteger, MMPLocationUpdateType) {
+    MMPLocationUpdateTypeUnknown = 0,
+    MMPLocationUpdateTypeStandard,
+    MMPLocationUpdateTypeSignificantChange
+};
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+
+typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
+    MMPLocationAuthorizationTypeAlways,
+    MMPLocationAuthorizationTypeWhenInUse
+};
+
+#endif
 
 @interface MMPReactiveCoreLocation : NSObject<MMPResourceLifecycleHelper>
 
@@ -45,6 +84,7 @@
 - (instancetype)timeout:(NSTimeInterval)timeout;
 */
 - (instancetype)region:(CLRegion *)region;
+- (instancetype)beaconRegion:(CLBeaconRegion *)region;
 - (instancetype)headingFilter:(CLLocationDegrees)headingFilter;
 - (instancetype)headingOrientation:(CLDeviceOrientation)headingOrientation;
 - (instancetype)shouldDisplayHeadingCalibration:(BOOL(^)(CLLocationManager *))block;
@@ -68,6 +108,7 @@
 
 - (RACSignal *)regionStates;
 - (RACSignal *)regionEvents;
+- (RACSignal *)beaconRanges;
 
 // =============================================================================
 // Heading update signals
@@ -93,6 +134,18 @@
 - (RACSignal *)authorize;
 #endif
 
+// =============================================================================
+// Other
+// =============================================================================
+
 - (void)stop;
+
+/**
+ *  Gets underlying location manager if available. Direct use is discouraged
+ *  as the location manager is managed internally.
+ *
+ *  @return location manager that is used by the service.
+ */
+- (CLLocationManager *)locationManager;
 
 @end
