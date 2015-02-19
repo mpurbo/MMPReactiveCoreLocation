@@ -30,7 +30,7 @@
 #import "MMPRegionEvent.h"
 #import "MMPResourceTracker.h"
 
-#define MMP_LOCATION_AGE_LIMIT_DEFAULT 5.0
+#define MMP_LOCATION_AGE_LIMIT_DEFAULT -1.0
 #define MMP_LOCATION_TIMEOUT_DEFAULT -1
 
 /**
@@ -78,11 +78,7 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
 - (instancetype)distanceFilter:(CLLocationDistance)distanceFilter;
 - (instancetype)desiredAccuracy:(CLLocationAccuracy)desiredAccuracy;
 - (instancetype)activityType:(CLActivityType)activityType;
-// TODO: implement these settings?
-/*
-- (instancetype)locationAgeLimit:(NSTimeInterval)locationAgeLimit;
-- (instancetype)timeout:(NSTimeInterval)timeout;
-*/
+
 - (instancetype)region:(CLRegion *)region;
 - (instancetype)beaconRegion:(CLBeaconRegion *)region;
 - (instancetype)headingFilter:(CLLocationDegrees)headingFilter;
@@ -92,6 +88,9 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
 - (instancetype)authorizeAlways;
 - (instancetype)authorizeWhenInUse;
 #endif
+
+- (instancetype)locationAgeLimit:(NSTimeInterval)locationAgeLimit;
+- (instancetype)timeout:(NSTimeInterval)timeout;
 
 // =============================================================================
 // Location signals

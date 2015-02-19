@@ -11,8 +11,6 @@
 
 @interface MMPLocationsViewController ()
 
-@property (nonatomic, strong) MMPLocationManager *locationManagerForAuth;
-
 @property (nonatomic, strong) MMPReactiveCoreLocation *locationService;
 @property (nonatomic, strong) MMPReactiveCoreLocation *significantService;
 
@@ -105,20 +103,24 @@
 
 - (IBAction)singleLocationButtonTouchUpInside:(id)sender {
 
-    [[[[MMPReactiveCoreLocation service]
-                                location]
-                                subscribeOn:[RACScheduler mainThreadScheduler]]
-                                subscribeNext:^(CLLocation *location) {
-                                    NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
-                                                           location.coordinate.latitude,
-                                                           location.coordinate.longitude,
-                                                           location.horizontalAccuracy];
-                                    NSLog(@"[INFO] received single location: %@", locString);
-                                    self.singleLocationLabel.text = locString;
-                                }
-                                completed:^{
-                                    NSLog(@"[INFO] single location signal completed.");
-                                }];
+    [[[[[MMPReactiveCoreLocation service]
+                                 timeout:5.0]
+                                 location]
+                                 subscribeOn:[RACScheduler mainThreadScheduler]]
+                                 subscribeNext:^(CLLocation *location) {
+                                     NSString *locString = [NSString stringWithFormat:@"(%f, %f, %f)",
+                                                            location.coordinate.latitude,
+                                                            location.coordinate.longitude,
+                                                            location.horizontalAccuracy];
+                                     NSLog(@"[INFO] received single location: %@", locString);
+                                     self.singleLocationLabel.text = locString;
+                                 }
+                                 error:^(NSError *error) {
+                                     NSLog(@"[ERROR] error getting location: %@", error);
+                                 }
+                                 completed:^{
+                                     NSLog(@"[INFO] single location signal completed.");
+                                 }];
     
 }
 

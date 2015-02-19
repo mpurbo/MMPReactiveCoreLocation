@@ -46,6 +46,9 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 @property(assign, nonatomic) CLDeviceOrientation headingOrientation;
 @property(copy) BOOL(^shouldDisplayHeadingCalibrationBlock)(CLLocationManager *);
 
+@property(assign, nonatomic) NSTimeInterval locationAgeLimit;
+@property(assign, nonatomic) NSTimeInterval timeout;
+
 @end
 
 @implementation MMPLocationManagerSettings
@@ -187,11 +190,20 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
         if (_signal)
             return _signal;
         
-        self.signal = [[self rac_signalForSelector:@selector(locationManager:didUpdateLocations:)
-                                      fromProtocol:@protocol(CLLocationManagerDelegate)]
-                             reduceEach:^id(id _, NSArray *locations) {
-                                 return [locations lastObject];
-                             }];
+        RACSignal *ret = [[self rac_signalForSelector:@selector(locationManager:didUpdateLocations:)
+                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
+                          reduceEach:^id(id _, NSArray *locations) {
+                              return [[locations lastObject] copy];
+                          }];
+        if (_settings.locationAgeLimit > 0) {
+            self.signal = [ret filter:^BOOL(CLLocation *location) {
+                NSTimeInterval locationAge = -[location.timestamp timeIntervalSinceNow];
+                return (locationAge <= _settings.locationAgeLimit);
+            }];
+        } else {
+            self.signal = ret;
+        }
+        
         [self _startManager];
         return _signal;
     }
@@ -436,6 +448,9 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     _settings.headingFilter = 1;
     _settings.headingOrientation = CLDeviceOrientationUnknown;
     _settings.shouldDisplayHeadingCalibrationBlock = nil;
+    
+    _settings.locationAgeLimit = MMP_LOCATION_AGE_LIMIT_DEFAULT;
+    _settings.timeout = MMP_LOCATION_TIMEOUT_DEFAULT;
 }
 
 - (instancetype)pauseLocationUpdatesAutomatically {
@@ -500,6 +515,16 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 }
 #endif
 
+- (instancetype)locationAgeLimit:(NSTimeInterval)locationAgeLimit {
+    _settings.locationAgeLimit = locationAgeLimit;
+    return self;
+}
+
+- (instancetype)timeout:(NSTimeInterval)timeout {
+    _settings.timeout = timeout;
+    return self;
+}
+
 #pragma mark - MMPReactiveCoreLocation: internal methods
 
 /**
@@ -511,14 +536,20 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 - (RACSignal *)_location {
     MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] retainResourceWithHelper:self];
     return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-        [[[resource locations]
-                    take:1]
-                    subscribeNext:^(id x) {
-                        [subscriber sendNext:x];
-                    }
-                    completed:^{
-                        [subscriber sendCompleted];
-                    }];
+        RACSignal *s =
+            (_settings.timeout > 0) ?
+                [[[resource locations] take:1] timeout:_settings.timeout onScheduler:[RACScheduler scheduler]] :
+                [[resource locations] take:1];
+        [s
+         subscribeNext:^(id x) {
+             [subscriber sendNext:x];
+         }
+         error:^(NSError *error) {
+             [subscriber sendError:error];
+         }
+         completed:^{
+             [subscriber sendCompleted];
+         }];
         return [RACDisposable disposableWithBlock:^{
             [self stop];
         }];
