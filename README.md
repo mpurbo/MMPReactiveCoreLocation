@@ -19,7 +19,8 @@ Features:
 
 Although most of the CoreLocation services are implemented, some are not tested and should be considered as alpha quality. Features documented here are tested and should work:
 
-1. [Location subscription](#location-subscription)
+1. [Location subscription](#location-stream-subscription)
+1. [Single location subscription](#single-location-subscription)
 1. [Significant changes subscription](#significant-changes-subscription)
 1. [Region monitoring events subscription](#region-monitoring-events-subscription)
 1. [Stopping subscription](#stopping-subscription)
@@ -31,12 +32,13 @@ Although most of the CoreLocation services are implemented, some are not tested 
 
 MMPReactiveCoreLocation is available through [CocoaPods](http://cocoapods.org), to install
 it simply add the following line to your Podfile:
-
-    pod "MMPReactiveCoreLocation"
+```
+pod "MMPReactiveCoreLocation"
+```
 
 ## Usage
 
-### Location Subscription
+### Location Stream Subscription
 
 The easiest way to subscribe to a location stream with [sensible default settings](#setting-location-manager) is by calling `locations` method to get the signal:
 ```objc
@@ -44,17 +46,48 @@ The easiest way to subscribe to a location stream with [sensible default setting
 #import <MMPReactiveCoreLocation/MMPReactiveCoreLocation.h>
 
 // build service, subscribe to 'locations' signal
-[[[MMPReactiveCoreLocation service] locations] subscribeNext:^(CLLocation *location) {
-    NSLog(@"[INFO] received location: %@", location);
-}];
+[[[MMPReactiveCoreLocation service] 
+                           locations] 
+                           subscribeNext:^(CLLocation *location) {
+                               NSLog(@"[INFO] received location: %@", location);
+                           }];
 ```
+Calling this exact same code from multiple places in the application _will not_ produce multiple `CLLocationManager`+`CLLocationManagerDelegate` sets. The library will manage, start and stop shared instances of `CLLocationManager`+`CLLocationManagerDelegate` based on settings specified when defining the service. For example, following code _will_ create a new `CLLocationManager`+`CLLocationManagerDelegate` set because it requires a custom `activityType`:
+```objc
+[[[[MMPReactiveCoreLocation service] 
+                            activityType:CLActivityTypeFitness]
+                            locations] 
+                            subscribeNext:^(CLLocation *location) {
+                                NSLog(@"[INFO] received location: %@", location);
+                            }];
+```
+
+### Single Location Subscription
 
 If you don't need a constant stream of location updates, you can use `location` (note the lack of plural `s`) to get the latest location once and the library will automatically stop CLLocationManager and cleanup resources:
 ```objc
 // one-time location
-[[[MMPReactiveCoreLocation service] location] subscribeNext:^(CLLocation *location) {
-    NSLog(@"[INFO] received location: %@", location);
-}];
+[[[MMPReactiveCoreLocation service] 
+                           location] 
+                           subscribeNext:^(CLLocation *location) {
+                               NSLog(@"[INFO] received single location: %@", location);
+                           }];
+```
+There is a useful option specific to single location subscription called `timeout`. This option can be used to specify whether the signal should give up after after an amount of time waiting for location. This is particularly useful when the application should keep functioning even when there currently is no location available (underground, etc.). Timing out the service will produce signal error as shown in the following example:
+```objc
+// one-time location with 5 sec. timeout
+[[[[MMPReactiveCoreLocation service]
+                            timeout:5.0]
+                            location]
+                            subscribeNext:^(CLLocation *location) {
+                                NSLog(@"[INFO] received single location: %@", location);
+                            }
+                            error:^(NSError *error) {
+                                NSLog(@"[ERROR] error getting location: %@", error);
+                            }
+                            completed:^{
+                                NSLog(@"[INFO] single location signal completed.");
+                            }];
 ```
 
 ### Significant Changes Subscription
@@ -62,9 +95,11 @@ If you don't need a constant stream of location updates, you can use `location` 
 For significant change updates, use `significantLocationChanges` signal instead:
 ```objc
 // build service, subscribe to 'significantLocationChanges' signal
-[[[MMPReactiveCoreLocation service] significantLocationChanges] subscribeNext:^(CLLocation *location) {
-    NSLog(@"[INFO] received location: %@", location);
-}];
+[[[MMPReactiveCoreLocation service] 
+                           significantLocationChanges] 
+                           subscribeNext:^(CLLocation *location) {
+                               NSLog(@"[INFO] received location: %@", location);
+                           }];
 ```
 Just as `locations` for constant updates and `location` for single update, use `significantLocationChanges` for constant significant location change updates and use `significantLocationChange` for single significant location change only.
 
