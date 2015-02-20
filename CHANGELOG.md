@@ -1,5 +1,15 @@
 # MMPReactiveCoreLocation CHANGELOG
 
+## 0.6.2
+
+* Added: Beacon ranging signal.
+* Added: Direct access to underlying CLLocationManager.
+* Added: New options: `locationAgeLimit`, `timeout`.
+* Fix: visits and headingUpdates subscription doesn't trigger the location manager start.
+* Fix: required delegate methods available as signals (`locationUpdatePauses`, `locationUpdateResumes`).
+* Added: request and subscribe to a specific region states (`statesForRegion:`).
+* Code cleanup.
+
 ## 0.6.1
 
 * Fix: signals sharing identical settings are not automatically stopped.
