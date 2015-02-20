@@ -23,13 +23,7 @@
     // Do any additional setup after loading the view.
     
     self.locationService = nil;
-    self.significantService = nil;
-    
-    /*
-    [[[MMPReactiveCoreLocation service] locations] subscribeNext:^(CLLocation *location) {
-        NSLog(@"bubu: %f, %f", location.coordinate.latitude, location.coordinate.longitude);
-    }];
-    */
+    self.significantService = nil;    
 }
 
 - (void)didReceiveMemoryWarning {

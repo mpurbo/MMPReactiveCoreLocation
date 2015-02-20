@@ -61,6 +61,13 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 @property (nonatomic, strong) CLLocationManager *manager;
 @property (nonatomic, strong) RACSignal *signal;
 
+// required delegates methods per API doc:
+// https://developer.apple.com/library/prerelease/ios/documentation/CoreLocation/Reference/CLLocationManagerDelegate_Protocol/index.html
+// (safer to implement even if nobody subscribes)
+@property (nonatomic, strong) RACSignal *locationUpdatePausesSignal;
+@property (nonatomic, strong) RACSignal *locationUpdateResumesSignal;
+@property (nonatomic, strong) RACSignal *regionStateDeterminationsSignal;
+
 - (id)initWithSettings:(MMPLocationManagerSettings *)settings;
 - (void)stop;
 
@@ -144,6 +151,28 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     return _manager;
 }
 
+- (void)_createAllRequiredDelegateMethods {
+    self.locationUpdatePausesSignal = [[self rac_signalForSelector:@selector(locationManagerDidPauseLocationUpdates:)
+                                                      fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                             reduceEach:^id(id obj) {
+                                                 return obj;
+                                             }];
+    
+    self.locationUpdateResumesSignal = [[self rac_signalForSelector:@selector(locationManagerDidResumeLocationUpdates:)
+                                                       fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                              reduceEach:^id(id obj) {
+                                                  return obj;
+                                              }];
+    
+    self.regionStateDeterminationsSignal = [[self rac_signalForSelector:@selector(locationManager:didDetermineState:forRegion:)
+                                                           fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                                  reduceEach:^id(id _, id state, CLRegion *region) {
+                                                      return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStateDetermined
+                                                                                            state:[state integerValue]
+                                                                                        forRegion:[region copy]];
+                                                  }];
+}
+
 - (void)_startManager {
     
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
@@ -183,130 +212,112 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
             NSLog(@"[WARN] Unknown location update type: %ld, not starting anything.", (long)_settings.locationServiceType);
             break;
     }
+
 }
 
-- (RACSignal *)locations {
+- (RACSignal *)_prepSignal:(RACSignal* (^)(void))createSignalBlock {
     @synchronized(self) {
         if (_signal)
             return _signal;
         
+        [self _createAllRequiredDelegateMethods];
+        self.signal = createSignalBlock();
+        [self _startManager];
+        return _signal;
+    }
+}
+
+- (RACSignal *)locations {
+    return [self _prepSignal:^RACSignal *{
         RACSignal *ret = [[self rac_signalForSelector:@selector(locationManager:didUpdateLocations:)
                                          fromProtocol:@protocol(CLLocationManagerDelegate)]
-                          reduceEach:^id(id _, NSArray *locations) {
-                              return [[locations lastObject] copy];
-                          }];
+                                reduceEach:^id(id _, NSArray *locations) {
+                                    return [[locations lastObject] copy];
+                                }];
         if (_settings.locationAgeLimit > 0) {
-            self.signal = [ret filter:^BOOL(CLLocation *location) {
+            return [ret filter:^BOOL(CLLocation *location) {
                 NSTimeInterval locationAge = -[location.timestamp timeIntervalSinceNow];
                 return (locationAge <= _settings.locationAgeLimit);
             }];
         } else {
-            self.signal = ret;
+            return ret;
         }
-        
-        [self _startManager];
-        return _signal;
-    }
+    }];
 }
 
 - (RACSignal *)regionEvents {
-    @synchronized(self) {
-        if (_signal)
-            return _signal;
-        
-        self.signal = [RACSignal merge:@[
-                                         [[self rac_signalForSelector:@selector(locationManager:didEnterRegion:)
-                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
-                                                reduceEach:^id(id _, CLRegion *region) {
-                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionEnter
-                                                                                      forRegion:[region copy]];
-                                                }],
-                                         [[self rac_signalForSelector:@selector(locationManager:didExitRegion:)
-                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
-                                                reduceEach:^id(id _, CLRegion *region) {
-                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionExit
-                                                                                      forRegion:[region copy]];
-                                                }],
-                                         [[self rac_signalForSelector:@selector(locationManager:didDetermineState:forRegion:)
-                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
-                                                reduceEach:^id(id _, id state, CLRegion *region) {
-                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStateDetermined
-                                                                                          state:[state integerValue]
-                                                                                      forRegion:[region copy]];
-                                                }],
-                                         [[self rac_signalForSelector:@selector(locationManager:monitoringDidFailForRegion:withError:)
-                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
-                                                reduceEach:^id(id _, CLRegion *region, NSError *error) {
-                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionFailedMonitoring
-                                                                                          error:error
-                                                                                      forRegion:[region copy]];
-                                                }],
-                                         [[self rac_signalForSelector:@selector(locationManager:didStartMonitoringForRegion:)
-                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
-                                                reduceEach:^id(id _, CLRegion *region) {
-                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStartMonitoring
-                                                                                      forRegion:[region copy]];
-                                                }]
-                                         ]];
-        
-        [self _startManager];
-        return _signal;
-    }
+    return [self _prepSignal:^RACSignal *{
+        return [RACSignal merge:@[
+                                  [[self rac_signalForSelector:@selector(locationManager:didEnterRegion:)
+                                                  fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                         reduceEach:^id(id _, CLRegion *region) {
+                                             return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionEnter
+                                                                               forRegion:[region copy]];
+                                         }],
+                                  [[self rac_signalForSelector:@selector(locationManager:didExitRegion:)
+                                                  fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                         reduceEach:^id(id _, CLRegion *region) {
+                                             return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionExit
+                                                                               forRegion:[region copy]];
+                                         }],
+                                  [[self rac_signalForSelector:@selector(locationManager:monitoringDidFailForRegion:withError:)
+                                                  fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                         reduceEach:^id(id _, CLRegion *region, NSError *error) {
+                                             return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionFailedMonitoring
+                                                                                   error:error
+                                                                               forRegion:[region copy]];
+                                         }],
+                                  [[self rac_signalForSelector:@selector(locationManager:didStartMonitoringForRegion:)
+                                                  fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                         reduceEach:^id(id _, CLRegion *region) {
+                                             return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStartMonitoring
+                                                                               forRegion:[region copy]];
+                                         }],
+                                  _regionStateDeterminationsSignal
+                                  ]];
+    }];
 }
 
 - (RACSignal *)beaconRanges {
-    @synchronized(self) {
-        if (_signal)
-            return _signal;
-        
-        self.signal = [RACSignal merge:@[
-                                         [[self rac_signalForSelector:@selector(locationManager:didRangeBeacons:inRegion:)
-                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
-                                                reduceEach:^id(id _, NSArray *beacons, CLBeaconRegion *region) {
-                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeBeaconRanged
-                                                                                        beacons:[beacons copy]
-                                                                                      forRegion:[region copy]];
-                                                }],
-                                         [[self rac_signalForSelector:@selector(locationManager:rangingBeaconsDidFailForRegion:withError:)
-                                                         fromProtocol:@protocol(CLLocationManagerDelegate)]
-                                                reduceEach:^id(id _, CLBeaconRegion *region, NSError *error) {
-                                                    return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeBeaconFailedRanging
-                                                                                          error:error
-                                                                                      forRegion:[region copy]];
-                                                }]
-                                         ]];
-        
-        [self _startManager];
-        return _signal;
-    }
-}
-
-
-- (RACSignal *)regionStates {
-    return [[self rac_signalForSelector:@selector(locationManager:didDetermineState:forRegion:)
-                           fromProtocol:@protocol(CLLocationManagerDelegate)]
-                  reduceEach:^id(id _, id state, CLRegion *region) {
-                      return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeRegionStateDetermined
-                                                            state:[state integerValue]
-                                                        forRegion:[region copy]];
-                  }];
+    return [self _prepSignal:^RACSignal *{
+        return [RACSignal merge:@[
+                                  [[self rac_signalForSelector:@selector(locationManager:didRangeBeacons:inRegion:)
+                                                  fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                         reduceEach:^id(id _, NSArray *beacons, CLBeaconRegion *region) {
+                                             return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeBeaconRanged
+                                                                                 beacons:[beacons copy]
+                                                                               forRegion:[region copy]];
+                                         }],
+                                  [[self rac_signalForSelector:@selector(locationManager:rangingBeaconsDidFailForRegion:withError:)
+                                                  fromProtocol:@protocol(CLLocationManagerDelegate)]
+                                         reduceEach:^id(id _, CLBeaconRegion *region, NSError *error) {
+                                             return [[MMPRegionEvent alloc] initWithType:MMPRegionEventTypeBeaconFailedRanging
+                                                                                   error:error
+                                                                               forRegion:[region copy]];
+                                         }]
+                                  ]];
+    }];
 }
 
 - (RACSignal *)headingUpdates {
-    return [[self rac_signalForSelector:@selector(locationManager:didUpdateHeading:)
-                           fromProtocol:@protocol(CLLocationManagerDelegate)]
-                  reduceEach:^id(id _, id state, CLHeading *newHeading) {
-                      return [newHeading copy];
-                  }];
+    return [self _prepSignal:^RACSignal *{
+        return [[self rac_signalForSelector:@selector(locationManager:didUpdateHeading:)
+                               fromProtocol:@protocol(CLLocationManagerDelegate)]
+                      reduceEach:^id(id _, id state, CLHeading *newHeading) {
+                          return [newHeading copy];
+                      }];
+    }];
 }
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
 - (RACSignal *)visits {
-    return [[self rac_signalForSelector:@selector(locationManager:didVisit:)
-                           fromProtocol:@protocol(CLLocationManagerDelegate)]
-                  reduceEach:^id(id _, id state, CLVisit *visit) {
-                      return [visit copy];
-                  }];
+    return [self _prepSignal:^RACSignal *{
+        return [[self rac_signalForSelector:@selector(locationManager:didVisit:)
+                               fromProtocol:@protocol(CLLocationManagerDelegate)]
+                      reduceEach:^id(id _, id state, CLVisit *visit) {
+                          return [visit copy];
+                      }];
+    }];
 }
 #endif
 
@@ -615,9 +626,28 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     }];
 }
 
+- (RACSignal *)locationUpdatePauses {
+    MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+    return resource.locationUpdatePausesSignal;
+}
+
+- (RACSignal *)locationUpdateResumes {
+    MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+    return resource.locationUpdateResumesSignal;
+}
+
 - (RACSignal *)regionStates {
     MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
-    return [[resource regionStates] takeUntil:_stopSubject];
+    return resource.regionStateDeterminationsSignal;
+}
+
+- (RACSignal *)statesForRegion:(CLRegion *)region {
+    MMPLocationManagerResource *resource = (MMPLocationManagerResource *)[[MMPResourceTracker instance] getResourceWithHelper:self];
+    [resource.manager requestStateForRegion:region];
+    return [[self regionStates] filter:^BOOL(MMPRegionEvent *regionEvent) {
+        // only returns states for the specified region
+        return [regionEvent.region.identifier isEqualToString:region.identifier];
+    }];
 }
 
 - (RACSignal *)regionEvents {

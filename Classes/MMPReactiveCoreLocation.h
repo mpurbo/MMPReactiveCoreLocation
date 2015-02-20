@@ -101,13 +101,17 @@ typedef NS_ENUM(NSInteger, MMPLocationAuthorizationType) {
 - (RACSignal *)significantLocationChanges;
 - (RACSignal *)significantLocationChange;
 
+- (RACSignal *)locationUpdatePauses;
+- (RACSignal *)locationUpdateResumes;
+
 // =============================================================================
 // Region monitoring signals
 // =============================================================================
 
-- (RACSignal *)regionStates;
 - (RACSignal *)regionEvents;
 - (RACSignal *)beaconRanges;
+- (RACSignal *)regionStates;
+- (RACSignal *)statesForRegion:(CLRegion *)region;
 
 // =============================================================================
 // Heading update signals
