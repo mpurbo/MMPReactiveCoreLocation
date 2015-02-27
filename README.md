@@ -139,11 +139,25 @@ Default settings for the location signals are:
 - Activity type is [CLActivityTypeOther](https://developer.apple.com/library/ios/Documentation/CoreLocation/Reference/CLLocationManager_Class/index.html#//apple_ref/c/tdef/CLActivityType).
 - On iOS 8, authorization type is "WhenInUse" for `locations` and "Always" for `significantLocationChanges` and `regionEvents`.
 
+Following table shows default authorization that will be used for available signals. You can also [manually specify authorization](#manual-authorization-request).
+
+Signal                      | Authorization
+----------------------------|--------------
+`locations`                 |`WhenInUse`
+`location`                  |`WhenInUse`
+`significantLocationChanges`|`Always`
+`significantLocationChange` |`Always`
+`regionEvents`              |`Always`
+`beaconRanges`              |`WhenInUse`
+`headingUpdates`            |`WhenInUse`
+`visits`                    |`Always`
+
 If you need other than default settings, then you chain-call following methods to set values that you want to customize:
 - `distanceFilter` for setting distance filter.
 - `desiredAccuracy` for setting desired accuracy.
 - `activityType` for setting activity type.
 - `pauseLocationUpdatesAutomatically` or `pauseLocationUpdatesManually` to set auto or manual update of location pauses.
+- `authorizeAlways` for `Always` authorization and `authorizeWhenInUse` for `WhenInUse` authorization.
 
 Here's a sample code on how to customize location manager settings before subscribing to a signal:
 ```objc
