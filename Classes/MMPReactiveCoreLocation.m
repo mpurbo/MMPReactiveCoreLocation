@@ -588,7 +588,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
     // significant location changes requires "Always"
     if (_settings.authorizationType != MMPLocationAuthorizationTypeAlways) {
-        MMPRxCL_LOG(@"[INFO] Significant location changes requires \"Always\" authorization, forcing \"Always\" authorization type.")
+        NSLog(@"[INFO] Significant location changes requires \"Always\" authorization, forcing \"Always\" authorization type.");
         _settings.authorizationType = MMPLocationAuthorizationTypeAlways;
     }
 #endif
@@ -660,7 +660,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
     
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
     if (_settings.authorizationType != MMPLocationAuthorizationTypeAlways) {
-        MMPRxCL_LOG(@"[INFO] Significant location changes requires \"Always\" authorization, forcing \"Always\" authorization type.")
+        NSLog(@"[INFO] Region monitoring requires \"Always\" authorization, forcing \"Always\" authorization type.");
         _settings.authorizationType = MMPLocationAuthorizationTypeAlways;
     }
 #endif
@@ -698,7 +698,7 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 - (RACSignal *)visits {
     
     if (_settings.authorizationType != MMPLocationAuthorizationTypeAlways) {
-        MMPRxCL_LOG(@"[INFO] Significant location changes requires \"Always\" authorization, forcing \"Always\" authorization type.")
+        NSLog(@"[INFO] Visit monitoring requires \"Always\" authorization, forcing \"Always\" authorization type.");
         _settings.authorizationType = MMPLocationAuthorizationTypeAlways;
     }
     
