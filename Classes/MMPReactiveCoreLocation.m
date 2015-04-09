@@ -88,13 +88,16 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 
 - (void)stop {
     switch (_settings.locationServiceType) {
+        case MMPLocationServiceTypeAuthOnly:
+            MMPRxCL_LOG(@"[INFO] Stopping authorization request.")
+            break;
         case MMPLocationServiceTypeLocation:
             [_manager stopUpdatingLocation];
-            MMPRxCL_LOG(@"[INFO] Location manager stopped updating location");
+            MMPRxCL_LOG(@"[INFO] Location manager stopped updating location")
             break;
         case MMPLocationServiceTypeSignificantChange:
             [_manager stopMonitoringSignificantLocationChanges];
-            MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring significant location change");
+            MMPRxCL_LOG(@"[INFO] Location manager stopped monitoring significant location change")
             break;
         case MMPLocationServiceTypeRegionMonitoring:
             for (CLRegion *region in _settings.regions) {
@@ -127,10 +130,12 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 - (void)_authorize:(CLLocationManager *)locationManager with:(MMPLocationAuthorizationType)authorizationType {
     if (authorizationType == MMPLocationAuthorizationTypeAlways) {
         if ([locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+            MMPRxCL_LOG(@"[INFO] Requesting for \"Always\" authorization")
             [locationManager requestAlwaysAuthorization];
         }
     } else if (authorizationType == MMPLocationAuthorizationTypeWhenInUse) {
         if ([locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
+            MMPRxCL_LOG(@"[INFO] Requesting for \"WhenInUse\" authorization")
             [locationManager requestWhenInUseAuthorization];
         }
     }
@@ -180,6 +185,9 @@ typedef NS_ENUM(NSInteger, MMPLocationServiceType) {
 #endif
     
     switch (_settings.locationServiceType) {
+        case MMPLocationServiceTypeAuthOnly:
+            MMPRxCL_LOG(@"[INFO] Starting authorization request.")
+            break;
         case MMPLocationServiceTypeLocation:
             [[self _setupManagerForLocation] startUpdatingLocation];
             MMPRxCL_LOG(@"[INFO] Location manager started updating location")

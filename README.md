@@ -212,11 +212,11 @@ Please see the header file for more setting possibilities.
 
 ### Manual Authorization Request
 
-When you need to send request for authorization manually, for example when using `MKMapView` and you just need to send the request before setting `showsUserLocation`, you can use `requestAuthorization` method that returns a signal producing status change events (same as `authorizationStatus` signal):
+When you need to send request for authorization manually, for example when using `MKMapView` and you just need to send the request before setting `showsUserLocation`, you can use `authorize` method that returns a signal producing status change events (same as `authorizationStatus` signal):
 ```objc
 [[[[MMPReactiveCoreLocation service]
                             authorizeAlways]
-                            requestAuthorization]
+                            authorize]
                             subscribeNext:^(NSNumber *statusNumber) {      
                                 CLAuthorizationStatus status = [statusNumber intValue];
                                 switch (status) {
