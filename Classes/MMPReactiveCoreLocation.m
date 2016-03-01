@@ -7,7 +7,7 @@
 //
 
 #import "MMPReactiveCoreLocation.h"
-#import <ReactiveCocoa/RACEXTScope.h>
+#import <ReactiveCocoa/ReactiveCocoa.h>
 
 #ifdef DEBUG
 #   define MMPRxCL_LOG(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
